@@ -3,6 +3,13 @@ library(Biostrings)
 library(seqinr)
 library(writexl)  # Excel dosyası oluşturmak için
 library(ggplot2)
+library(magick)
+
+# Başlangıçta .temp dizinini oluştur ve yolunu sakla
+temp_dir <- file.path(getwd(), ".temp")
+if (!dir.exists(temp_dir)) {
+  dir.create(temp_dir)
+}
 
 server <- function(input, output, session) {
   
@@ -13,8 +20,21 @@ server <- function(input, output, session) {
     inFile <- input$fasta_file
     if (is.null(inFile)) return(NULL)
     
+    # FASTA dosyasını oku
     sequences <- readDNAStringSet(inFile$datapath)
-    return(sequences)
+    
+    # Geçersiz karakterleri kontrol et ve temizle
+    cleaned_sequences <- DNAStringSet(lapply(sequences, function(seq) {
+      # Sadece geçerli DNA karakterlerini tut (ACGT)
+      cleaned <- gsub("[^ACGT]", "", as.character(seq))
+      if (nchar(cleaned) < nchar(as.character(seq))) {
+        warning("Invalid characters removed from sequence")
+      }
+      return(cleaned)
+    }))
+    
+    names(cleaned_sequences) <- names(sequences)
+    return(cleaned_sequences)
   })
   
   # Maksimum kaydırma miktarını hesapla
@@ -36,47 +56,95 @@ server <- function(input, output, session) {
     updateTabsetPanel(session, "mainTabset", selected = "negative")
   })
   
-  # RNAfold ile yapı tahmini yapan fonksiyon
-  predict_structure <- reactive({
-    req(fasta_data())
-    
+  # RNAfold ile yapı tahmini ve görselleştirme
+  predict_structure_with_images <- function(sequences, output_dir) {
     # Geçici dosya oluştur
-    temp_fasta <- tempfile(fileext = ".fasta")
-    writeXStringSet(fasta_data(), temp_fasta)
+    temp_fasta <- file.path(temp_dir, paste0("temp_", format(Sys.time(), "%Y%m%d_%H%M%S"), ".fasta"))
+    writeXStringSet(sequences, temp_fasta)
     
-    # RNAfold çalıştır
-    results <- system2("D:/DUYGU/Desktop/RNAfold/RNAfold.exe",
-                      args = c("--noPS", temp_fasta), 
-                      stdout = TRUE,
-                      stderr = TRUE)
+    # Çıktı dizini oluştur
+    if (!dir.exists(output_dir)) {
+      dir.create(output_dir, recursive = TRUE)
+    }
     
-    # Sonuçları parse et
+    # RNAfold'un tam yolunu oluştur
+    rnafold_path <- file.path(getwd(), "app/RNAfold.exe")
+    message("RNAfold path: ", rnafold_path)
+    
+    # RNAfold'un varlığını kontrol et
+    if (!file.exists(rnafold_path)) {
+      stop("RNAfold.exe not found at: ", rnafold_path)
+    }
+    
+    # Mevcut çalışma dizinini kaydet
+    original_wd <- getwd()
+    
+    # Çalışma dizinini temp_dir'e değiştir
+    setwd(temp_dir)
+    
+    # Her sekans için ayrı çıktı dosyası oluştur
     parsed_results <- data.frame(
-      Sequence_Name = character(),
-      RNA_Type = character(),
-      Structure = character(),
-      MFE = numeric(),
+      Sequence_Name = names(sequences),
+      RNA_Type = rep(input$rnaType, length(sequences)),
+      Structure = character(length(sequences)),
+      MFE = numeric(length(sequences)),
+      Image_Path = character(length(sequences)),
       stringsAsFactors = FALSE
     )
     
-    i <- 1
-    for(line in results) {
-      if(startsWith(line, ">")) {
-        parsed_results[i, "Sequence_Name"] <- substr(line, 2, nchar(line))
-        parsed_results[i, "RNA_Type"] <- input$rnaType
-      } else if(grepl("[().]+", line)) {
-        structure <- gsub("\\s.*$", "", line)
-        mfe <- as.numeric(gsub(".*[(]([-.0-9]+)\\s*[)].*", "\\1", line))
-        parsed_results[i, "Structure"] <- structure
-        parsed_results[i, "MFE"] <- mfe
-        i <- i + 1
+    for(i in 1:length(sequences)) {
+      # Her sekans için ayrı bir FASTA dosyası oluştur
+      seq_fasta <- paste0("seq_", i, ".fasta")
+      writeXStringSet(sequences[i], seq_fasta)
+      
+      # Çıktı dosya yolunu belirle
+      output_file <- file.path(output_dir, paste0(parsed_results$Sequence_Name[i], "_ss.ps"))
+      parsed_results$Image_Path[i] <- output_file
+      
+      # RNAfold çalıştır
+      results <- system2(rnafold_path,
+                        args = c(seq_fasta), 
+                        stdout = TRUE,
+                        stderr = TRUE)
+      
+      # PS dosyasını doğru konuma taşı
+      ps_file <- paste0(parsed_results$Sequence_Name[i], "_ss.ps")
+      if (file.exists(ps_file)) {
+        file.rename(ps_file, output_file)
       }
+      
+      # Sonuçları parse et
+      for(line in results) {
+        if(grepl("[().]+", line)) {
+          structure <- gsub("\\s.*$", "", line)
+          mfe <- as.numeric(gsub(".*[(]([-.0-9]+)\\s*[)].*", "\\1", line))
+          
+          parsed_results$Structure[i] <- structure
+          parsed_results$MFE[i] <- mfe
+          break
+        }
+      }
+      
+      # Geçici FASTA dosyasını sil
+      unlink(seq_fasta)
     }
     
-    # Geçici dosyayı sil
+    # Çalışma dizinini geri al
+    setwd(original_wd)
+    
+    # Ana geçici dosyayı sil
     unlink(temp_fasta)
     
     return(parsed_results)
+  }
+  
+  # Orijinal sekanslar için yapı tahmini
+  predict_structure <- reactive({
+    req(fasta_data())
+    
+    # Görsellerle birlikte yapı tahmini yap
+    output_dir <- file.path(temp_dir, "original_structures")
+    predict_structure_with_images(fasta_data(), output_dir)
   })
   
   # Metod 1: NeRNA ile negatif veri oluşturma (kaydırma)
@@ -117,6 +185,15 @@ server <- function(input, output, session) {
     showNotification("NeRNA sequences generated successfully!", type = "message")
   })
   
+  # NeRNA sekansları için yapı tahmini
+  nerna_structures <- reactive({
+    req(nernaData())
+    
+    # Görsellerle birlikte yapı tahmini yap
+    output_dir <- file.path(temp_dir, "nerna_structures")
+    predict_structure_with_images(nernaData(), output_dir)
+  })
+  
   # Metod 2: Random Shuffling
   shuffleData <- reactiveVal(NULL)
   
@@ -144,6 +221,15 @@ server <- function(input, output, session) {
     updateTabsetPanel(session, "negativeResultTabs", selected = "Random Shuffling Results")
     
     showNotification("Shuffled sequences generated successfully!", type = "message")
+  })
+  
+  # Shuffle sekansları için yapı tahmini
+  shuffle_structures <- reactive({
+    req(shuffleData())
+    
+    # Görsellerle birlikte yapı tahmini yap
+    output_dir <- file.path(temp_dir, "shuffle_structures")
+    predict_structure_with_images(shuffleData(), output_dir)
   })
   
   # Metod 3: Dinucleotide Shuffling
@@ -192,6 +278,15 @@ server <- function(input, output, session) {
     updateTabsetPanel(session, "negativeResultTabs", selected = "Dinucleotide Results")
     
     showNotification("Dinucleotide shuffled sequences generated successfully!", type = "message")
+  })
+  
+  # Dinucleotide sekansları için yapı tahmini
+  dinucleotide_structures <- reactive({
+    req(dinucleotideData())
+    
+    # Görsellerle birlikte yapı tahmini yap
+    output_dir <- file.path(temp_dir, "dinucleotide_structures")
+    predict_structure_with_images(dinucleotideData(), output_dir)
   })
   
   # Sonuçları gösterme
@@ -259,41 +354,142 @@ server <- function(input, output, session) {
     )
   })
   
+  # Karşılaştırma verilerini saklayacak reaktif değer
+  comparisonData <- reactiveVal(NULL)
+  
   # Karşılaştırma tablosu
   output$comparisonTable <- renderTable({
-    req(fasta_data())
+    # En az bir yöntem oluşturulmuş olmalı
+    req(any(!is.null(nernaData()), !is.null(shuffleData()), !is.null(dinucleotideData())))
     
-    # Hangi yöntemler oluşturuldu?
-    methods_generated <- c(
-      "Original" = TRUE,
-      "NeRNA" = !is.null(nernaData()),
-      "Random Shuffling" = !is.null(shuffleData()),
-      "Dinucleotide" = !is.null(dinucleotideData())
-    )
-    
-    # Sadece oluşturulan yöntemleri göster
-    methods <- names(methods_generated)[methods_generated]
+    # Orijinal sekansların MFE değerlerini al
+    orig_mfe <- mean(predict_structure()$MFE)
     
     # Karşılaştırma tablosu oluştur
     comparison <- data.frame(
-      Method = methods,
-      Sequences = c(
-        length(fasta_data()),
-        if("NeRNA" %in% methods) length(nernaData()) else NULL,
-        if("Random Shuffling" %in% methods) length(shuffleData()) else NULL,
-        if("Dinucleotide" %in% methods) length(dinucleotideData()) else NULL
-      ),
-      Parameters = c(
-        "N/A",
-        if("NeRNA" %in% methods) paste("Shift:", input$nernaShift) else NULL,
-        if("Random Shuffling" %in% methods) paste("Seed:", input$shuffleSeed) else NULL,
-        if("Dinucleotide" %in% methods) paste("Seed:", input$dinucSeed) else NULL
-      ),
+      Method = "Original",
+      Avg_Length = mean(width(fasta_data())),
+      Avg_MFE = orig_mfe,
       stringsAsFactors = FALSE
     )
     
+    # NeRNA sonuçlarını ekle
+    if(!is.null(nernaData())) {
+      # NeRNA sekansları için MFE hesapla
+      nerna_mfe <- calculate_mfe(nernaData())
+      
+      comparison <- rbind(comparison, data.frame(
+        Method = "NeRNA",
+        Avg_Length = mean(width(nernaData())),
+        Avg_MFE = mean(nerna_mfe$MFE),
+        stringsAsFactors = FALSE
+      ))
+    }
+    
+    # Shuffle sonuçlarını ekle
+    if(!is.null(shuffleData())) {
+      # Shuffle sekansları için MFE hesapla
+      shuffle_mfe <- calculate_mfe(shuffleData())
+      
+      comparison <- rbind(comparison, data.frame(
+        Method = "Random Shuffling",
+        Avg_Length = mean(width(shuffleData())),
+        Avg_MFE = mean(shuffle_mfe$MFE),
+        stringsAsFactors = FALSE
+      ))
+    }
+    
+    # Dinucleotide sonuçlarını ekle
+    if(!is.null(dinucleotideData())) {
+      # Dinucleotide sekansları için MFE hesapla
+      dinuc_mfe <- calculate_mfe(dinucleotideData())
+      
+      comparison <- rbind(comparison, data.frame(
+        Method = "Dinucleotide",
+        Avg_Length = mean(width(dinucleotideData())),
+        Avg_MFE = mean(dinuc_mfe$MFE),
+        stringsAsFactors = FALSE
+      ))
+    }
+    
+    # Ortalama değerleri yuvarla
+    comparison$Avg_Length <- round(comparison$Avg_Length, 2)
+    comparison$Avg_MFE <- round(comparison$Avg_MFE, 2)
+    
+    # Karşılaştırma verilerini sakla
+    comparisonData(comparison)
+    
     return(comparison)
   })
+  
+  # Karşılaştırma grafiği
+  output$comparisonPlot <- renderPlot({
+    # En az bir yöntem oluşturulmuş olmalı
+    req(any(!is.null(nernaData()), !is.null(shuffleData()), !is.null(dinucleotideData())))
+    req(comparisonData())
+    
+    # Karşılaştırma verilerini al
+    comparison_data <- comparisonData()
+    
+    # Veriyi uzun formata dönüştür
+    library(reshape2)
+    melted_data <- melt(comparison_data, id.vars = "Method", 
+                        measure.vars = c("Avg_Length", "Avg_MFE"),
+                        variable.name = "Metric", value.name = "Value")
+    
+    # Metrik isimlerini düzelt
+    melted_data$Metric <- factor(melted_data$Metric, 
+                                levels = c("Avg_Length", "Avg_MFE"),
+                                labels = c("Average Length (nt)", "Average MFE (kcal/mol)"))
+    
+    # Grafik oluştur
+    ggplot(melted_data, aes(x = Method, y = Value, fill = Method)) +
+      geom_bar(stat = "identity") +
+      facet_wrap(~ Metric, scales = "free_y") +
+      theme_minimal() +
+      labs(title = "Comparison of Methods", x = "", y = "") +
+      theme(axis.text.x = element_text(angle = 45, hjust = 1),
+            legend.position = "none")
+  })
+  
+  # MFE hesaplama fonksiyonu ekleyelim
+  calculate_mfe <- function(sequences) {
+    # Geçici dosya oluştur
+    temp_fasta <- file.path(temp_dir, paste0("temp_", format(Sys.time(), "%Y%m%d_%H%M%S"), ".fasta"))
+    writeXStringSet(sequences, temp_fasta)
+    
+    # RNAfold çalıştır
+    results <- system2("D:/DUYGU/Desktop/RNAfold/RNAfold.exe",
+                      args = c(temp_fasta), 
+                      stdout = TRUE,
+                      stderr = TRUE)
+    
+    # Sonuçları parse et
+    parsed_results <- data.frame(
+      Sequence_Name = character(),
+      Structure = character(),
+      MFE = numeric(),
+      stringsAsFactors = FALSE
+    )
+    
+    i <- 1
+    for(line in results) {
+      if(startsWith(line, ">")) {
+        parsed_results[i, "Sequence_Name"] <- substr(line, 2, nchar(line))
+      } else if(grepl("[().]+", line)) {
+        structure <- gsub("\\s.*$", "", line)
+        mfe <- as.numeric(gsub(".*[(]([-.0-9]+)\\s*[)].*", "\\1", line))
+        parsed_results[i, "Structure"] <- structure
+        parsed_results[i, "MFE"] <- mfe
+        i <- i + 1
+      }
+    }
+    
+    # Geçici dosyayı sil
+    unlink(temp_fasta)
+    
+    return(parsed_results)
+  }
   
   # Grafikler
   output$nernaPlot <- renderPlot({
@@ -356,63 +552,114 @@ server <- function(input, output, session) {
       theme(axis.text.x = element_text(angle = 45, hjust = 1))
   })
   
-  output$comparisonPlot <- renderPlot({
-    # En az bir yöntem oluşturulmuş olmalı
-    req(any(!is.null(nernaData()), !is.null(shuffleData()), !is.null(dinucleotideData())))
+  # PS dosyalarını PNG'ye dönüştürme fonksiyonu
+  convert_ps_to_png <- function(ps_file) {
+    if (!file.exists(ps_file)) {
+      return(NULL)
+    }
     
-    # Veri çerçevesi oluştur
-    df <- data.frame(
-      Sequence = character(),
-      Method = character(),
-      Length = numeric(),
-      stringsAsFactors = FALSE
+    # PNG dosya yolunu oluştur
+    png_file <- sub("\\.ps$", ".png", ps_file)
+    
+    # ImageMagick ile dönüştür
+    tryCatch({
+      # Windows için
+      convert_cmd <- "magick"
+      
+      system2(convert_cmd,
+              args = c("convert", ps_file, png_file),
+              stdout = TRUE,
+              stderr = TRUE)
+      
+      if (file.exists(png_file)) {
+        return(png_file)
+      } else {
+        return(NULL)
+      }
+    }, error = function(e) {
+      message("Error converting PS to PNG: ", e$message)
+      return(NULL)
+    })
+  }
+  
+  # Yapı görselleştirme fonksiyonu (sadece metin)
+  output$originalStructureNeRNA <- renderUI({
+    req(predict_structure())
+    req(nernaData())
+    
+    # İlk sekansın yapısını göster
+    structure_data <- predict_structure()[1, ]
+    
+    div(
+      p(strong("Sequence:"), structure_data$Sequence_Name),
+      p(strong("Structure:"), structure_data$Structure),
+      p(strong("MFE:"), paste0(structure_data$MFE, " kcal/mol")),
+      tags$pre(structure_data$Structure)  # Yapıyı monospace font ile göster
     )
+  })
+  
+  output$nernaStructure <- renderUI({
+    req(nerna_structures())
     
-    # Orijinal sekansları ekle
-    df <- rbind(df, data.frame(
-      Sequence = names(fasta_data()),
-      Method = "Original",
-      Length = width(fasta_data()),
-      stringsAsFactors = FALSE
-    ))
+    # İlk sekansın yapısını göster
+    structure_data <- nerna_structures()[1, ]
     
-    # NeRNA sekanslarını ekle
-    if(!is.null(nernaData())) {
-      df <- rbind(df, data.frame(
-        Sequence = gsub("^neRNA_shift[0-9]+_", "", names(nernaData())),
-        Method = "NeRNA",
-        Length = width(nernaData()),
-        stringsAsFactors = FALSE
-      ))
-    }
+    div(
+      p(strong("Sequence:"), structure_data$Sequence_Name),
+      p(strong("Structure:"), structure_data$Structure),
+      p(strong("MFE:"), paste0(structure_data$MFE, " kcal/mol"))
+    )
+  })
+  
+  # Benzer şekilde diğer yöntemler için de yapıları göster
+  output$originalStructureShuffle <- renderUI({
+    req(predict_structure())
+    req(shuffleData())
     
-    # Shuffle sekanslarını ekle
-    if(!is.null(shuffleData())) {
-      df <- rbind(df, data.frame(
-        Sequence = gsub("^shuffle_seed[0-9]+_", "", names(shuffleData())),
-        Method = "Random Shuffling",
-        Length = width(shuffleData()),
-        stringsAsFactors = FALSE
-      ))
-    }
+    structure_data <- predict_structure()[1, ]
     
-    # Dinucleotide sekanslarını ekle
-    if(!is.null(dinucleotideData())) {
-      df <- rbind(df, data.frame(
-        Sequence = gsub("^dinuc_seed[0-9]+_", "", names(dinucleotideData())),
-        Method = "Dinucleotide",
-        Length = width(dinucleotideData()),
-        stringsAsFactors = FALSE
-      ))
-    }
+    div(
+      p(strong("Sequence:"), structure_data$Sequence_Name),
+      p(strong("Structure:"), structure_data$Structure),
+      p(strong("MFE:"), paste0(structure_data$MFE, " kcal/mol"))
+    )
+  })
+  
+  output$shuffleStructure <- renderUI({
+    req(shuffle_structures())
     
-    # Grafik oluştur
-    ggplot(df, aes(x = Method, y = Length, fill = Method)) +
-      geom_boxplot() +
-      theme_minimal() +
-      labs(title = "Sequence Length Comparison Across Methods", 
-           x = "Method", y = "Sequence Length") +
-      theme(legend.position = "none")
+    structure_data <- shuffle_structures()[1, ]
+    
+    div(
+      p(strong("Sequence:"), structure_data$Sequence_Name),
+      p(strong("Structure:"), structure_data$Structure),
+      p(strong("MFE:"), paste0(structure_data$MFE, " kcal/mol"))
+    )
+  })
+  
+  output$originalStructureDinuc <- renderUI({
+    req(predict_structure())
+    req(dinucleotideData())
+    
+    structure_data <- predict_structure()[1, ]
+    
+    div(
+      p(strong("Sequence:"), structure_data$Sequence_Name),
+      p(strong("Structure:"), structure_data$Structure),
+      p(strong("MFE:"), paste0(structure_data$MFE, " kcal/mol"))
+    )
+  })
+  
+  output$dinucleotideStructure <- renderUI({
+    req(dinucleotide_structures())
+    
+    structure_data <- dinucleotide_structures()[1, ]
+    
+    div(
+      p(strong("Sequence:"), structure_data$Sequence_Name),
+      p(strong("Structure:"), structure_data$Structure),
+      p(strong("MFE:"), paste0(structure_data$MFE, " kcal/mol"))
+    )
   })
   
   # Excel olarak indirme
@@ -423,9 +670,13 @@ server <- function(input, output, session) {
     content = function(file) {
       # Tüm sonuçları bir liste olarak topla
       all_results <- list(
-        "Structure_Predictions" = predict_structure(),
-        "Comparison" = as.data.frame(output$comparisonTable)
+        "Structure_Predictions" = predict_structure()
       )
+      
+      # Karşılaştırma sonuçları
+      if(!is.null(comparisonData())) {
+        all_results[["Comparison"]] <- comparisonData()
+      }
       
       # NeRNA sonuçları
       if(!is.null(nernaData())) {
@@ -508,4 +759,73 @@ server <- function(input, output, session) {
       writeXStringSet(dinucleotideData(), file)
     }
   )
+  
+  # RNAfold test fonksiyonu
+  test_rnafold <- function() {
+    # Test FASTA dosyası oluştur
+    test_seq <- DNAStringSet("ACGTACGTACGT")
+    names(test_seq) <- "test_sequence"
+    
+    # Mevcut çalışma dizinini kaydet
+    original_wd <- getwd()
+    
+    # Çalışma dizinini temp_dir'e değiştir
+    setwd(temp_dir)
+    
+    test_file <- "test.fasta"
+    writeXStringSet(test_seq, test_file)
+    
+    # RNAfold'un tam yolunu oluştur
+    rnafold_path <- file.path(original_wd, "app/RNAfold.exe")
+    output_dir <- file.path(temp_dir, "test_output")
+    
+    # Çıktı dizinini oluştur
+    if (!dir.exists(output_dir)) {
+      dir.create(output_dir, recursive = TRUE)
+    }
+    
+    message("Running RNAfold test...")
+    message("Working directory: ", getwd())
+    message("RNAfold path: ", rnafold_path)
+    message("RNAfold exists: ", file.exists(rnafold_path))
+    
+    if (!file.exists(rnafold_path)) {
+      stop("RNAfold.exe not found at: ", rnafold_path)
+    }
+    
+    results <- system2(rnafold_path,
+                      args = c(test_file), 
+                      stdout = TRUE,
+                      stderr = TRUE)
+    
+    # PS dosyasını doğru konuma taşı
+    ps_file <- "test_sequence_ss.ps"
+    if (file.exists(ps_file)) {
+      file.rename(ps_file, file.path(output_dir, ps_file))
+    }
+    
+    message("RNAfold output: ", paste(results, collapse = "\n"))
+    
+    # Çıktı dizinindeki dosyaları listele
+    files <- list.files(output_dir, full.names = TRUE)
+    message("Files in output directory: ", paste(files, collapse = ", "))
+    
+    # Çalışma dizinini geri al
+    setwd(original_wd)
+    
+    return(results)
+  }
+  
+  # Uygulama başladığında RNAfold'u test et
+  observe({
+    test_rnafold()
+  })
+  
+  # Oturum sonlandığında temp dizinini temizle
+  onSessionEnded(function() {
+    if (dir.exists(temp_dir)) {
+      unlink(temp_dir, recursive = TRUE)
+      dir.create(temp_dir)  # Yeni bir temiz dizin oluştur
+    }
+  })
 }

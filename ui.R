@@ -115,17 +115,50 @@ ui <- fluidPage(
           tabsetPanel(id = "negativeResultTabs",
             tabPanel("NeRNA Results", 
               tableOutput("nernaTable"),
-              plotOutput("nernaPlot")
+              hr(),
+              h4("Secondary Structure Comparison"),
+              fluidRow(
+                column(6, 
+                  h5("Original Structure"),
+                  uiOutput("originalStructureNeRNA")
+                ),
+                column(6, 
+                  h5("NeRNA Structure"),
+                  uiOutput("nernaStructure")
+                )
+              )
             ),
             
             tabPanel("Random Shuffling Results", 
               tableOutput("shuffleTable"),
-              plotOutput("shufflePlot")
+              hr(),
+              h4("Secondary Structure Comparison"),
+              fluidRow(
+                column(6, 
+                  h5("Original Structure"),
+                  uiOutput("originalStructureShuffle")
+                ),
+                column(6, 
+                  h5("Shuffled Structure"),
+                  uiOutput("shuffleStructure")
+                )
+              )
             ),
             
             tabPanel("Dinucleotide Results", 
               tableOutput("dinucleotideTable"),
-              plotOutput("dinucleotidePlot")
+              hr(),
+              h4("Secondary Structure Comparison"),
+              fluidRow(
+                column(6, 
+                  h5("Original Structure"),
+                  uiOutput("originalStructureDinuc")
+                ),
+                column(6, 
+                  h5("Dinucleotide Structure"),
+                  uiOutput("dinucleotideStructure")
+                )
+              )
             )
           )
         ),
