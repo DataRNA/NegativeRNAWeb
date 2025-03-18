@@ -22,5 +22,5 @@ library(magick)
 library(base64enc)
 
 # Karakter kodlaması ayarı
-Sys.setlocale("LC_ALL", "Turkish")
+Sys.setlocale("LC_ALL", 'en_US.UTF-8')
 

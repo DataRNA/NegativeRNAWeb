@@ -21,20 +21,9 @@ server <- function(input, output, session) {
     if (is.null(inFile)) return(NULL)
     
     # FASTA dosyasını oku
-    sequences <- readDNAStringSet(inFile$datapath)
+    sequences <- readRNAStringSet(inFile$datapath)
     
-    # Geçersiz karakterleri kontrol et ve temizle
-    cleaned_sequences <- DNAStringSet(lapply(sequences, function(seq) {
-      # Sadece geçerli DNA karakterlerini tut (ACGT)
-      cleaned <- gsub("[^ACGT]", "", as.character(seq))
-      if (nchar(cleaned) < nchar(as.character(seq))) {
-        warning("Invalid characters removed from sequence")
-      }
-      return(cleaned)
-    }))
-    
-    names(cleaned_sequences) <- names(sequences)
-    return(cleaned_sequences)
+    return(sequences)
   })
   
   # Maksimum kaydırma miktarını hesapla
@@ -157,7 +146,7 @@ server <- function(input, output, session) {
     shift_amount <- input$nernaShift
     
     sequences <- fasta_data()
-    negative_seqs <- DNAStringSet()
+    negative_seqs <- RNAStringSet()
     
     for(i in 1:length(sequences)) {
       orig_seq <- as.character(sequences[[i]])
@@ -173,7 +162,7 @@ server <- function(input, output, session) {
         new_seq <- chartr("ACGT", "TGCA", orig_seq)
       }
       
-      negative_seqs[[i]] <- DNAString(new_seq)
+      negative_seqs[[i]] <- RNAString(new_seq)
     }
     
     names(negative_seqs) <- paste0("neRNA_shift", shift_amount, "_", names(sequences))
@@ -204,14 +193,14 @@ server <- function(input, output, session) {
     set.seed(input$shuffleSeed)
     
     sequences <- fasta_data()
-    negative_seqs <- DNAStringSet()
+    negative_seqs <- RNAStringSet()
     
     for(i in 1:length(sequences)) {
       orig_seq <- sequences[[i]]
       
       # Rastgele karıştırma işlemi
       shuffled_seq <- sample(strsplit(as.character(orig_seq), '')[[1]])
-      negative_seqs[[i]] <- DNAString(paste0(shuffled_seq, collapse=''))
+      negative_seqs[[i]] <- RNAString(paste0(shuffled_seq, collapse=''))
     }
     
     names(negative_seqs) <- paste0("shuffle_seed", input$shuffleSeed, "_", names(sequences))
@@ -242,7 +231,7 @@ server <- function(input, output, session) {
     set.seed(input$dinucSeed)
     
     sequences <- fasta_data()
-    negative_seqs <- DNAStringSet()
+    negative_seqs <- RNAStringSet()
     
     for(i in 1:length(sequences)) {
       orig_seq <- as.character(sequences[[i]])
@@ -268,7 +257,7 @@ server <- function(input, output, session) {
         new_seq <- paste0(sample(strsplit(orig_seq, '')[[1]]), collapse='')
       }
       
-      negative_seqs[[i]] <- DNAString(new_seq)
+      negative_seqs[[i]] <- RNAString(new_seq)
     }
     
     names(negative_seqs) <- paste0("dinuc_seed", input$dinucSeed, "_", names(sequences))
@@ -457,12 +446,14 @@ server <- function(input, output, session) {
     # Geçici dosya oluştur
     temp_fasta <- file.path(temp_dir, paste0("temp_", format(Sys.time(), "%Y%m%d_%H%M%S"), ".fasta"))
     writeXStringSet(sequences, temp_fasta)
-    
+    original_wd <- getwd()
+    rnafold_path <- file.path(original_wd, "app/RNAfold.exe")
+
     # RNAfold çalıştır
-    results <- system2("D:/DUYGU/Desktop/RNAfold/RNAfold.exe",
-                      args = c(temp_fasta), 
-                      stdout = TRUE,
-                      stderr = TRUE)
+    results <- system2(rnafold_path,
+                       args = c(temp_fasta), 
+                       stdout = TRUE,
+                       stderr = TRUE)
     
     # Sonuçları parse et
     parsed_results <- data.frame(
@@ -763,7 +754,7 @@ server <- function(input, output, session) {
   # RNAfold test fonksiyonu
   test_rnafold <- function() {
     # Test FASTA dosyası oluştur
-    test_seq <- DNAStringSet("ACGTACGTACGT")
+    test_seq <- RNAStringSet("ACGACGUACGU")
     names(test_seq) <- "test_sequence"
     
     # Mevcut çalışma dizinini kaydet
