@@ -1,0 +1,17 @@
+# Windows executables (not needed in Linux Docker)
+utils/*.exe
+utils/*.dll
+
+# Development files
+.Rhistory
+.RData
+.Ruserdata
+
+# Git
+.git
+.gitignore
+
+# Documentation (optional, uncomment if you want to exclude)
+# README.md
+# LICENSE
+
