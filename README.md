@@ -1,4 +1,4 @@
-# NeRNA-Web
+# NeRNA-Web v1.0
 
 NeRNA-Web is an R Shiny application for generating and comparing synthetic negative RNA sequences. It supports miRNA, lncRNA, circRNA, and tRNA input in FASTA format.
 
