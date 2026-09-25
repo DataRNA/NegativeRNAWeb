@@ -1,0 +1,756 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PMML version="4.2" xmlns="http://www.dmg.org/PMML-4_2">
+  <Header copyright="DataRNA1">
+    <Application name="KNIME" version="5.12.0"/>
+  </Header>
+  <DataDictionary numberOfFields="37">
+    <DataField name="x1_1" optype="continuous" dataType="double">
+      <Interval closure="closedClosed" leftMargin="-0.18177003311463794" rightMargin="0.2189817493028102"/>
+    </DataField>
+    <DataField name="y1_1" optype="continuous" dataType="double">
+      <Interval closure="closedClosed" leftMargin="-0.17514040284094373" rightMargin="0.22767970805074125"/>
+    </DataField>
+    <DataField name="z1_1" optype="continuous" dataType="double">
+      <Interval closure="closedClosed" leftMargin="0.9680852686983915" rightMargin="87.70137641020689"/>
+    </DataField>
+    <DataField name="x1_2" optype="continuous" dataType="double">
+      <Interval closure="closedClosed" leftMargin="-0.14118008292501674" rightMargin="0.28756067755082865"/>
+    </DataField>
+    <DataField name="y1_2" optype="continuous" dataType="double">
+      <Interval closure="closedClosed" leftMargin="-0.20261724503721806" rightMargin="0.23452494409400057"/>
+    </DataField>
+    <DataField name="z1_2" optype="continuous" dataType="double">
+      <Interval closure="closedClosed" leftMargin="0.22599766124752668" rightMargin="239.0120476504933"/>
+    </DataField>
+    <DataField name="x1_3" optype="continuous" dataType="double">
+      <Interval closure="closedClosed" leftMargin="-0.3184963550578189" rightMargin="0.17883190015489012"/>
+    </DataField>
+    <DataField name="y1_3" optype="continuous" dataType="double">
+      <Interval closure="closedClosed" leftMargin="-0.20244689116413772" rightMargin="0.25467228683791154"/>
+    </DataField>
+    <DataField name="z1_3" optype="continuous" dataType="double">
+      <Interval closure="closedClosed" leftMargin="0.0" rightMargin="6192.50145957512"/>
+    </DataField>
+    <DataField name="x1_4" optype="continuous" dataType="double">
+      <Interval closure="closedClosed" leftMargin="-0.15638399448434687" rightMargin="0.1367960950698006"/>
+    </DataField>
+    <DataField name="y1_4" optype="continuous" dataType="double">
+      <Interval closure="closedClosed" leftMargin="-0.188560048575468" rightMargin="0.16464922634107684"/>
+    </DataField>
+    <DataField name="z1_4" optype="continuous" dataType="double">
+      <Interval closure="closedClosed" leftMargin="0.0" rightMargin="30287.428562376346"/>
+    </DataField>
+    <DataField name="x2_1" optype="continuous" dataType="double">
+      <Interval closure="closedClosed" leftMargin="-0.18940311826352693" rightMargin="0.24049052410157318"/>
+    </DataField>
+    <DataField name="y2_1" optype="continuous" dataType="double">
+      <Interval closure="closedClosed" leftMargin="-0.19442508029512584" rightMargin="0.23197879425654905"/>
+    </DataField>
+    <DataField name="z2_1" optype="continuous" dataType="double">
+      <Interval closure="closedClosed" leftMargin="0.22599766124752668" rightMargin="180.76663330663956"/>
+    </DataField>
+    <DataField name="x2_2" optype="continuous" dataType="double">
+      <Interval closure="closedClosed" leftMargin="-0.23014138554314992" rightMargin="0.23488482365663182"/>
+    </DataField>
+    <DataField name="y2_2" optype="continuous" dataType="double">
+      <Interval closure="closedClosed" leftMargin="-0.2039911133393352" rightMargin="0.19679376282291577"/>
+    </DataField>
+    <DataField name="z2_2" optype="continuous" dataType="double">
+      <Interval closure="closedClosed" leftMargin="0.014850063758123394" rightMargin="6496.195706065529"/>
+    </DataField>
+    <DataField name="x2_3" optype="continuous" dataType="double">
+      <Interval closure="closedClosed" leftMargin="-0.277353485134515" rightMargin="0.14346992405433978"/>
+    </DataField>
+    <DataField name="y2_3" optype="continuous" dataType="double">
+      <Interval closure="closedClosed" leftMargin="-0.21059988924998568" rightMargin="0.23942922060942967"/>
+    </DataField>
+    <DataField name="z2_3" optype="continuous" dataType="double">
+      <Interval closure="closedClosed" leftMargin="0.0" rightMargin="11510.270075947656"/>
+    </DataField>
+    <DataField name="x2_4" optype="continuous" dataType="double">
+      <Interval closure="closedClosed" leftMargin="-0.3198327767569432" rightMargin="0.16436501271784534"/>
+    </DataField>
+    <DataField name="y2_4" optype="continuous" dataType="double">
+      <Interval closure="closedClosed" leftMargin="-0.299811312365202" rightMargin="0.1946577097927514"/>
+    </DataField>
+    <DataField name="z2_4" optype="continuous" dataType="double">
+      <Interval closure="closedClosed" leftMargin="0.0" rightMargin="135.99748839202235"/>
+    </DataField>
+    <DataField name="x3_1" optype="continuous" dataType="double">
+      <Interval closure="closedClosed" leftMargin="-0.1366564228349981" rightMargin="0.29661667988335794"/>
+    </DataField>
+    <DataField name="y3_1" optype="continuous" dataType="double">
+      <Interval closure="closedClosed" leftMargin="-0.22212704797466687" rightMargin="0.252583353550448"/>
+    </DataField>
+    <DataField name="z3_1" optype="continuous" dataType="double">
+      <Interval closure="closedClosed" leftMargin="0.0" rightMargin="1160.4881963382363"/>
+    </DataField>
+    <DataField name="x3_2" optype="continuous" dataType="double">
+      <Interval closure="closedClosed" leftMargin="-0.13648459465720256" rightMargin="0.2967230951399918"/>
+    </DataField>
+    <DataField name="y3_2" optype="continuous" dataType="double">
+      <Interval closure="closedClosed" leftMargin="-0.23504749450862575" rightMargin="0.16909179514337477"/>
+    </DataField>
+    <DataField name="z3_2" optype="continuous" dataType="double">
+      <Interval closure="closedClosed" leftMargin="0.007532214804317571" rightMargin="42936.27389652637"/>
+    </DataField>
+    <DataField name="x3_3" optype="continuous" dataType="double">
+      <Interval closure="closedClosed" leftMargin="-0.27794794653597976" rightMargin="0.17000602463141778"/>
+    </DataField>
+    <DataField name="y3_3" optype="continuous" dataType="double">
+      <Interval closure="closedClosed" leftMargin="-0.19826193255628086" rightMargin="0.266911760679858"/>
+    </DataField>
+    <DataField name="z3_3" optype="continuous" dataType="double">
+      <Interval closure="closedClosed" leftMargin="0.6327276392070077" rightMargin="96.59542955573869"/>
+    </DataField>
+    <DataField name="x3_4" optype="continuous" dataType="double">
+      <Interval closure="closedClosed" leftMargin="-0.28157175229882037" rightMargin="0.11881414175127063"/>
+    </DataField>
+    <DataField name="y3_4" optype="continuous" dataType="double">
+      <Interval closure="closedClosed" leftMargin="-0.22033909651784964" rightMargin="0.14902384987470638"/>
+    </DataField>
+    <DataField name="z3_4" optype="continuous" dataType="double">
+      <Interval closure="closedClosed" leftMargin="0.0" rightMargin="183.34754595730675"/>
+    </DataField>
+    <DataField name="class" optype="categorical" dataType="string">
+      <Value value="positive"/>
+      <Value value="negative"/>
+    </DataField>
+  </DataDictionary>
+  <TreeModel modelName="DecisionTree" functionName="classification" splitCharacteristic="binarySplit" missingValueStrategy="lastPrediction" noTrueChildStrategy="returnNullPrediction">
+    <MiningSchema>
+      <MiningField name="x1_1" invalidValueTreatment="asIs"/>
+      <MiningField name="y1_1" invalidValueTreatment="asIs"/>
+      <MiningField name="z1_1" invalidValueTreatment="asIs"/>
+      <MiningField name="x1_2" invalidValueTreatment="asIs"/>
+      <MiningField name="y1_2" invalidValueTreatment="asIs"/>
+      <MiningField name="z1_2" invalidValueTreatment="asIs"/>
+      <MiningField name="x1_3" invalidValueTreatment="asIs"/>
+      <MiningField name="y1_3" invalidValueTreatment="asIs"/>
+      <MiningField name="z1_3" invalidValueTreatment="asIs"/>
+      <MiningField name="x1_4" invalidValueTreatment="asIs"/>
+      <MiningField name="y1_4" invalidValueTreatment="asIs"/>
+      <MiningField name="z1_4" invalidValueTreatment="asIs"/>
+      <MiningField name="x2_1" invalidValueTreatment="asIs"/>
+      <MiningField name="y2_1" invalidValueTreatment="asIs"/>
+      <MiningField name="z2_1" invalidValueTreatment="asIs"/>
+      <MiningField name="x2_2" invalidValueTreatment="asIs"/>
+      <MiningField name="y2_2" invalidValueTreatment="asIs"/>
+      <MiningField name="z2_2" invalidValueTreatment="asIs"/>
+      <MiningField name="x2_3" invalidValueTreatment="asIs"/>
+      <MiningField name="y2_3" invalidValueTreatment="asIs"/>
+      <MiningField name="z2_3" invalidValueTreatment="asIs"/>
+      <MiningField name="x2_4" invalidValueTreatment="asIs"/>
+      <MiningField name="y2_4" invalidValueTreatment="asIs"/>
+      <MiningField name="z2_4" invalidValueTreatment="asIs"/>
+      <MiningField name="x3_1" invalidValueTreatment="asIs"/>
+      <MiningField name="y3_1" invalidValueTreatment="asIs"/>
+      <MiningField name="z3_1" invalidValueTreatment="asIs"/>
+      <MiningField name="x3_2" invalidValueTreatment="asIs"/>
+      <MiningField name="y3_2" invalidValueTreatment="asIs"/>
+      <MiningField name="z3_2" invalidValueTreatment="asIs"/>
+      <MiningField name="x3_3" invalidValueTreatment="asIs"/>
+      <MiningField name="y3_3" invalidValueTreatment="asIs"/>
+      <MiningField name="z3_3" invalidValueTreatment="asIs"/>
+      <MiningField name="x3_4" invalidValueTreatment="asIs"/>
+      <MiningField name="y3_4" invalidValueTreatment="asIs"/>
+      <MiningField name="z3_4" invalidValueTreatment="asIs"/>
+      <MiningField name="class" invalidValueTreatment="asIs" usageType="target"/>
+    </MiningSchema>
+    <Node id="0" score="positive" recordCount="2657.0">
+      <True/>
+      <ScoreDistribution value="positive" recordCount="1342.0"/>
+      <ScoreDistribution value="negative" recordCount="1315.0"/>
+      <Node id="1" score="positive" recordCount="1162.0">
+        <SimplePredicate field="z3_3" operator="lessOrEqual" value="12.370812555091122"/>
+        <ScoreDistribution value="positive" recordCount="1062.0"/>
+        <ScoreDistribution value="negative" recordCount="100.0"/>
+        <Node id="3" score="negative" recordCount="104.0">
+          <SimplePredicate field="z1_1" operator="lessOrEqual" value="9.860162757049887"/>
+          <ScoreDistribution value="positive" recordCount="40.0"/>
+          <ScoreDistribution value="negative" recordCount="64.0"/>
+          <Node id="4" score="positive" recordCount="41.0">
+            <SimplePredicate field="z3_3" operator="lessOrEqual" value="8.92103585242332"/>
+            <ScoreDistribution value="positive" recordCount="31.0"/>
+            <ScoreDistribution value="negative" recordCount="10.0"/>
+            <Node id="5" score="negative" recordCount="4.0">
+              <SimplePredicate field="x1_3" operator="lessOrEqual" value="-0.0998008903952215"/>
+              <ScoreDistribution value="positive" recordCount="0.0"/>
+              <ScoreDistribution value="negative" recordCount="4.0"/>
+            </Node>
+            <Node id="6" score="positive" recordCount="37.0">
+              <SimplePredicate field="x1_3" operator="greaterThan" value="-0.0998008903952215"/>
+              <ScoreDistribution value="positive" recordCount="31.0"/>
+              <ScoreDistribution value="negative" recordCount="6.0"/>
+              <Node id="7" score="negative" recordCount="2.0">
+                <SimplePredicate field="y3_1" operator="lessOrEqual" value="-0.06041706097440881"/>
+                <ScoreDistribution value="positive" recordCount="0.0"/>
+                <ScoreDistribution value="negative" recordCount="2.0"/>
+              </Node>
+              <Node id="8" score="positive" recordCount="35.0">
+                <SimplePredicate field="y3_1" operator="greaterThan" value="-0.06041706097440881"/>
+                <ScoreDistribution value="positive" recordCount="31.0"/>
+                <ScoreDistribution value="negative" recordCount="4.0"/>
+                <Node id="9" score="positive" recordCount="32.0">
+                  <SimplePredicate field="y1_4" operator="lessOrEqual" value="0.07185641289386879"/>
+                  <ScoreDistribution value="positive" recordCount="30.0"/>
+                  <ScoreDistribution value="negative" recordCount="2.0"/>
+                  <Node id="10" score="positive" recordCount="25.0">
+                    <SimplePredicate field="x2_4" operator="lessOrEqual" value="-0.01688791786015953"/>
+                    <ScoreDistribution value="positive" recordCount="25.0"/>
+                    <ScoreDistribution value="negative" recordCount="0.0"/>
+                  </Node>
+                  <Node id="11" score="positive" recordCount="7.0">
+                    <SimplePredicate field="x2_4" operator="greaterThan" value="-0.01688791786015953"/>
+                    <ScoreDistribution value="positive" recordCount="5.0"/>
+                    <ScoreDistribution value="negative" recordCount="2.0"/>
+                    <Node id="12" score="positive" recordCount="4.0">
+                      <SimplePredicate field="x3_4" operator="lessOrEqual" value="-0.021989095424130932"/>
+                      <ScoreDistribution value="positive" recordCount="4.0"/>
+                      <ScoreDistribution value="negative" recordCount="0.0"/>
+                    </Node>
+                    <Node id="13" score="negative" recordCount="3.0">
+                      <SimplePredicate field="x3_4" operator="greaterThan" value="-0.021989095424130932"/>
+                      <ScoreDistribution value="positive" recordCount="1.0"/>
+                      <ScoreDistribution value="negative" recordCount="2.0"/>
+                    </Node>
+                  </Node>
+                </Node>
+                <Node id="14" score="negative" recordCount="3.0">
+                  <SimplePredicate field="y1_4" operator="greaterThan" value="0.07185641289386879"/>
+                  <ScoreDistribution value="positive" recordCount="1.0"/>
+                  <ScoreDistribution value="negative" recordCount="2.0"/>
+                </Node>
+              </Node>
+            </Node>
+          </Node>
+          <Node id="15" score="negative" recordCount="63.0">
+            <SimplePredicate field="z3_3" operator="greaterThan" value="8.92103585242332"/>
+            <ScoreDistribution value="positive" recordCount="9.0"/>
+            <ScoreDistribution value="negative" recordCount="54.0"/>
+            <Node id="16" score="negative" recordCount="55.0">
+              <SimplePredicate field="x2_1" operator="lessOrEqual" value="0.07870481306056928"/>
+              <ScoreDistribution value="positive" recordCount="4.0"/>
+              <ScoreDistribution value="negative" recordCount="51.0"/>
+              <Node id="17" score="positive" recordCount="3.0">
+                <SimplePredicate field="y2_1" operator="lessOrEqual" value="-0.0951015557012122"/>
+                <ScoreDistribution value="positive" recordCount="2.0"/>
+                <ScoreDistribution value="negative" recordCount="1.0"/>
+              </Node>
+              <Node id="18" score="negative" recordCount="52.0">
+                <SimplePredicate field="y2_1" operator="greaterThan" value="-0.0951015557012122"/>
+                <ScoreDistribution value="positive" recordCount="2.0"/>
+                <ScoreDistribution value="negative" recordCount="50.0"/>
+              </Node>
+            </Node>
+            <Node id="23" score="positive" recordCount="8.0">
+              <SimplePredicate field="x2_1" operator="greaterThan" value="0.07870481306056928"/>
+              <ScoreDistribution value="positive" recordCount="5.0"/>
+              <ScoreDistribution value="negative" recordCount="3.0"/>
+              <Node id="24" score="negative" recordCount="3.0">
+                <SimplePredicate field="z3_2" operator="lessOrEqual" value="0.33735263454949477"/>
+                <ScoreDistribution value="positive" recordCount="0.0"/>
+                <ScoreDistribution value="negative" recordCount="3.0"/>
+              </Node>
+              <Node id="25" score="positive" recordCount="5.0">
+                <SimplePredicate field="z3_2" operator="greaterThan" value="0.33735263454949477"/>
+                <ScoreDistribution value="positive" recordCount="5.0"/>
+                <ScoreDistribution value="negative" recordCount="0.0"/>
+              </Node>
+            </Node>
+          </Node>
+        </Node>
+        <Node id="26" score="positive" recordCount="1058.0">
+          <SimplePredicate field="z1_1" operator="greaterThan" value="9.860162757049887"/>
+          <ScoreDistribution value="positive" recordCount="1022.0"/>
+          <ScoreDistribution value="negative" recordCount="36.0"/>
+          <Node id="28" score="positive" recordCount="797.0">
+            <SimplePredicate field="z3_3" operator="lessOrEqual" value="9.759758883785235"/>
+            <ScoreDistribution value="positive" recordCount="794.0"/>
+            <ScoreDistribution value="negative" recordCount="3.0"/>
+          </Node>
+          <Node id="62" score="positive" recordCount="261.0">
+            <SimplePredicate field="z3_3" operator="greaterThan" value="9.759758883785235"/>
+            <ScoreDistribution value="positive" recordCount="228.0"/>
+            <ScoreDistribution value="negative" recordCount="33.0"/>
+            <Node id="63" score="negative" recordCount="21.0">
+              <SimplePredicate field="y2_1" operator="lessOrEqual" value="-0.04616028430309198"/>
+              <ScoreDistribution value="positive" recordCount="3.0"/>
+              <ScoreDistribution value="negative" recordCount="18.0"/>
+              <Node id="64" score="positive" recordCount="5.0">
+                <SimplePredicate field="z3_4" operator="lessOrEqual" value="3.2534884379752875"/>
+                <ScoreDistribution value="positive" recordCount="3.0"/>
+                <ScoreDistribution value="negative" recordCount="2.0"/>
+                <Node id="65" score="negative" recordCount="2.0">
+                  <SimplePredicate field="z3_4" operator="lessOrEqual" value="2.8240675999741764"/>
+                  <ScoreDistribution value="positive" recordCount="0.0"/>
+                  <ScoreDistribution value="negative" recordCount="2.0"/>
+                </Node>
+                <Node id="66" score="positive" recordCount="3.0">
+                  <SimplePredicate field="z3_4" operator="greaterThan" value="2.8240675999741764"/>
+                  <ScoreDistribution value="positive" recordCount="3.0"/>
+                  <ScoreDistribution value="negative" recordCount="0.0"/>
+                </Node>
+              </Node>
+              <Node id="67" score="negative" recordCount="16.0">
+                <SimplePredicate field="z3_4" operator="greaterThan" value="3.2534884379752875"/>
+                <ScoreDistribution value="positive" recordCount="0.0"/>
+                <ScoreDistribution value="negative" recordCount="16.0"/>
+              </Node>
+            </Node>
+            <Node id="68" score="positive" recordCount="240.0">
+              <SimplePredicate field="y2_1" operator="greaterThan" value="-0.04616028430309198"/>
+              <ScoreDistribution value="positive" recordCount="225.0"/>
+              <ScoreDistribution value="negative" recordCount="15.0"/>
+              <Node id="73" score="negative" recordCount="9.0">
+                <SimplePredicate field="x3_1" operator="lessOrEqual" value="-0.04526990353092358"/>
+                <ScoreDistribution value="positive" recordCount="4.0"/>
+                <ScoreDistribution value="negative" recordCount="5.0"/>
+                <Node id="74" score="negative" recordCount="5.0">
+                  <SimplePredicate field="x2_1" operator="lessOrEqual" value="0.053960594077476935"/>
+                  <ScoreDistribution value="positive" recordCount="0.0"/>
+                  <ScoreDistribution value="negative" recordCount="5.0"/>
+                </Node>
+                <Node id="75" score="positive" recordCount="4.0">
+                  <SimplePredicate field="x2_1" operator="greaterThan" value="0.053960594077476935"/>
+                  <ScoreDistribution value="positive" recordCount="4.0"/>
+                  <ScoreDistribution value="negative" recordCount="0.0"/>
+                </Node>
+              </Node>
+              <Node id="76" score="positive" recordCount="231.0">
+                <SimplePredicate field="x3_1" operator="greaterThan" value="-0.04526990353092358"/>
+                <ScoreDistribution value="positive" recordCount="221.0"/>
+                <ScoreDistribution value="negative" recordCount="10.0"/>
+                <Node id="77" score="positive" recordCount="9.0">
+                  <SimplePredicate field="z2_2" operator="lessOrEqual" value="1.6647981096086073"/>
+                  <ScoreDistribution value="positive" recordCount="5.0"/>
+                  <ScoreDistribution value="negative" recordCount="4.0"/>
+                  <Node id="78" score="positive" recordCount="6.0">
+                    <SimplePredicate field="z2_2" operator="lessOrEqual" value="1.4745449493112117"/>
+                    <ScoreDistribution value="positive" recordCount="5.0"/>
+                    <ScoreDistribution value="negative" recordCount="1.0"/>
+                  </Node>
+                  <Node id="81" score="negative" recordCount="3.0">
+                    <SimplePredicate field="z2_2" operator="greaterThan" value="1.4745449493112117"/>
+                    <ScoreDistribution value="positive" recordCount="0.0"/>
+                    <ScoreDistribution value="negative" recordCount="3.0"/>
+                  </Node>
+                </Node>
+                <Node id="82" score="positive" recordCount="222.0">
+                  <SimplePredicate field="z2_2" operator="greaterThan" value="1.6647981096086073"/>
+                  <ScoreDistribution value="positive" recordCount="216.0"/>
+                  <ScoreDistribution value="negative" recordCount="6.0"/>
+                  <Node id="83" score="positive" recordCount="6.0">
+                    <SimplePredicate field="x3_3" operator="lessOrEqual" value="-0.06949644318356175"/>
+                    <ScoreDistribution value="positive" recordCount="4.0"/>
+                    <ScoreDistribution value="negative" recordCount="2.0"/>
+                    <Node id="84" score="negative" recordCount="2.0">
+                      <SimplePredicate field="z3_4" operator="lessOrEqual" value="4.674481391455176"/>
+                      <ScoreDistribution value="positive" recordCount="0.0"/>
+                      <ScoreDistribution value="negative" recordCount="2.0"/>
+                    </Node>
+                    <Node id="85" score="positive" recordCount="4.0">
+                      <SimplePredicate field="z3_4" operator="greaterThan" value="4.674481391455176"/>
+                      <ScoreDistribution value="positive" recordCount="4.0"/>
+                      <ScoreDistribution value="negative" recordCount="0.0"/>
+                    </Node>
+                  </Node>
+                  <Node id="86" score="positive" recordCount="216.0">
+                    <SimplePredicate field="x3_3" operator="greaterThan" value="-0.06949644318356175"/>
+                    <ScoreDistribution value="positive" recordCount="212.0"/>
+                    <ScoreDistribution value="negative" recordCount="4.0"/>
+                  </Node>
+                </Node>
+              </Node>
+            </Node>
+          </Node>
+        </Node>
+      </Node>
+      <Node id="2" score="negative" recordCount="1495.0">
+        <SimplePredicate field="z3_3" operator="greaterThan" value="12.370812555091122"/>
+        <ScoreDistribution value="positive" recordCount="280.0"/>
+        <ScoreDistribution value="negative" recordCount="1215.0"/>
+        <Node id="27" score="negative" recordCount="1171.0">
+          <SimplePredicate field="z1_1" operator="lessOrEqual" value="17.176507664525634"/>
+          <ScoreDistribution value="positive" recordCount="64.0"/>
+          <ScoreDistribution value="negative" recordCount="1107.0"/>
+          <Node id="31" score="negative" recordCount="113.0">
+            <SimplePredicate field="z3_4" operator="lessOrEqual" value="3.8071595680346055"/>
+            <ScoreDistribution value="positive" recordCount="36.0"/>
+            <ScoreDistribution value="negative" recordCount="77.0"/>
+            <Node id="32" score="negative" recordCount="67.0">
+              <SimplePredicate field="z1_1" operator="lessOrEqual" value="9.760623172505415"/>
+              <ScoreDistribution value="positive" recordCount="4.0"/>
+              <ScoreDistribution value="negative" recordCount="63.0"/>
+              <Node id="33" score="negative" recordCount="7.0">
+                <SimplePredicate field="z3_4" operator="lessOrEqual" value="1.912765472210657"/>
+                <ScoreDistribution value="positive" recordCount="3.0"/>
+                <ScoreDistribution value="negative" recordCount="4.0"/>
+                <Node id="34" score="negative" recordCount="4.0">
+                  <SimplePredicate field="z3_4" operator="lessOrEqual" value="1.8382547807739043"/>
+                  <ScoreDistribution value="positive" recordCount="0.0"/>
+                  <ScoreDistribution value="negative" recordCount="4.0"/>
+                </Node>
+                <Node id="35" score="positive" recordCount="3.0">
+                  <SimplePredicate field="z3_4" operator="greaterThan" value="1.8382547807739043"/>
+                  <ScoreDistribution value="positive" recordCount="3.0"/>
+                  <ScoreDistribution value="negative" recordCount="0.0"/>
+                </Node>
+              </Node>
+              <Node id="36" score="negative" recordCount="60.0">
+                <SimplePredicate field="z3_4" operator="greaterThan" value="1.912765472210657"/>
+                <ScoreDistribution value="positive" recordCount="1.0"/>
+                <ScoreDistribution value="negative" recordCount="59.0"/>
+              </Node>
+            </Node>
+            <Node id="39" score="positive" recordCount="46.0">
+              <SimplePredicate field="z1_1" operator="greaterThan" value="9.760623172505415"/>
+              <ScoreDistribution value="positive" recordCount="32.0"/>
+              <ScoreDistribution value="negative" recordCount="14.0"/>
+              <Node id="40" score="negative" recordCount="8.0">
+                <SimplePredicate field="x3_4" operator="lessOrEqual" value="-0.03306067525350474"/>
+                <ScoreDistribution value="positive" recordCount="0.0"/>
+                <ScoreDistribution value="negative" recordCount="8.0"/>
+              </Node>
+              <Node id="41" score="positive" recordCount="38.0">
+                <SimplePredicate field="x3_4" operator="greaterThan" value="-0.03306067525350474"/>
+                <ScoreDistribution value="positive" recordCount="32.0"/>
+                <ScoreDistribution value="negative" recordCount="6.0"/>
+                <Node id="42" score="negative" recordCount="2.0">
+                  <SimplePredicate field="y1_4" operator="lessOrEqual" value="-0.042264144802091154"/>
+                  <ScoreDistribution value="positive" recordCount="0.0"/>
+                  <ScoreDistribution value="negative" recordCount="2.0"/>
+                </Node>
+                <Node id="43" score="positive" recordCount="36.0">
+                  <SimplePredicate field="y1_4" operator="greaterThan" value="-0.042264144802091154"/>
+                  <ScoreDistribution value="positive" recordCount="32.0"/>
+                  <ScoreDistribution value="negative" recordCount="4.0"/>
+                  <Node id="44" score="positive" recordCount="32.0">
+                    <SimplePredicate field="x1_4" operator="lessOrEqual" value="0.027612798233990744"/>
+                    <ScoreDistribution value="positive" recordCount="30.0"/>
+                    <ScoreDistribution value="negative" recordCount="2.0"/>
+                    <Node id="45" score="positive" recordCount="5.0">
+                      <SimplePredicate field="x2_3" operator="lessOrEqual" value="-0.02908954945757167"/>
+                      <ScoreDistribution value="positive" recordCount="3.0"/>
+                      <ScoreDistribution value="negative" recordCount="2.0"/>
+                      <Node id="46" score="positive" recordCount="3.0">
+                        <SimplePredicate field="y3_2" operator="lessOrEqual" value="0.019879139396195268"/>
+                        <ScoreDistribution value="positive" recordCount="3.0"/>
+                        <ScoreDistribution value="negative" recordCount="0.0"/>
+                      </Node>
+                      <Node id="47" score="negative" recordCount="2.0">
+                        <SimplePredicate field="y3_2" operator="greaterThan" value="0.019879139396195268"/>
+                        <ScoreDistribution value="positive" recordCount="0.0"/>
+                        <ScoreDistribution value="negative" recordCount="2.0"/>
+                      </Node>
+                    </Node>
+                    <Node id="48" score="positive" recordCount="27.0">
+                      <SimplePredicate field="x2_3" operator="greaterThan" value="-0.02908954945757167"/>
+                      <ScoreDistribution value="positive" recordCount="27.0"/>
+                      <ScoreDistribution value="negative" recordCount="0.0"/>
+                    </Node>
+                  </Node>
+                  <Node id="49" score="positive" recordCount="4.0">
+                    <SimplePredicate field="x1_4" operator="greaterThan" value="0.027612798233990744"/>
+                    <ScoreDistribution value="positive" recordCount="2.0"/>
+                    <ScoreDistribution value="negative" recordCount="2.0"/>
+                    <Node id="50" score="negative" recordCount="2.0">
+                      <SimplePredicate field="z3_4" operator="lessOrEqual" value="2.986328485865659"/>
+                      <ScoreDistribution value="positive" recordCount="0.0"/>
+                      <ScoreDistribution value="negative" recordCount="2.0"/>
+                    </Node>
+                    <Node id="51" score="positive" recordCount="2.0">
+                      <SimplePredicate field="z3_4" operator="greaterThan" value="2.986328485865659"/>
+                      <ScoreDistribution value="positive" recordCount="2.0"/>
+                      <ScoreDistribution value="negative" recordCount="0.0"/>
+                    </Node>
+                  </Node>
+                </Node>
+              </Node>
+            </Node>
+          </Node>
+          <Node id="52" score="negative" recordCount="1058.0">
+            <SimplePredicate field="z3_4" operator="greaterThan" value="3.8071595680346055"/>
+            <ScoreDistribution value="positive" recordCount="28.0"/>
+            <ScoreDistribution value="negative" recordCount="1030.0"/>
+            <Node id="57" score="negative" recordCount="984.0">
+              <SimplePredicate field="z1_1" operator="lessOrEqual" value="15.499067952766886"/>
+              <ScoreDistribution value="positive" recordCount="11.0"/>
+              <ScoreDistribution value="negative" recordCount="973.0"/>
+              <Node id="69" score="negative" recordCount="11.0">
+                <SimplePredicate field="y1_2" operator="lessOrEqual" value="-0.08846940461916171"/>
+                <ScoreDistribution value="positive" recordCount="3.0"/>
+                <ScoreDistribution value="negative" recordCount="8.0"/>
+                <Node id="70" score="positive" recordCount="3.0">
+                  <SimplePredicate field="z2_4" operator="lessOrEqual" value="14.23696151570006"/>
+                  <ScoreDistribution value="positive" recordCount="3.0"/>
+                  <ScoreDistribution value="negative" recordCount="0.0"/>
+                </Node>
+                <Node id="71" score="negative" recordCount="8.0">
+                  <SimplePredicate field="z2_4" operator="greaterThan" value="14.23696151570006"/>
+                  <ScoreDistribution value="positive" recordCount="0.0"/>
+                  <ScoreDistribution value="negative" recordCount="8.0"/>
+                </Node>
+              </Node>
+              <Node id="72" score="negative" recordCount="973.0">
+                <SimplePredicate field="y1_2" operator="greaterThan" value="-0.08846940461916171"/>
+                <ScoreDistribution value="positive" recordCount="8.0"/>
+                <ScoreDistribution value="negative" recordCount="965.0"/>
+                <Node id="91" score="negative" recordCount="32.0">
+                  <SimplePredicate field="z3_3" operator="lessOrEqual" value="13.200462490344833"/>
+                  <ScoreDistribution value="positive" recordCount="5.0"/>
+                  <ScoreDistribution value="negative" recordCount="27.0"/>
+                  <Node id="92" score="negative" recordCount="26.0">
+                    <SimplePredicate field="z1_1" operator="lessOrEqual" value="12.350695793361146"/>
+                    <ScoreDistribution value="positive" recordCount="0.0"/>
+                    <ScoreDistribution value="negative" recordCount="26.0"/>
+                  </Node>
+                  <Node id="93" score="positive" recordCount="6.0">
+                    <SimplePredicate field="z1_1" operator="greaterThan" value="12.350695793361146"/>
+                    <ScoreDistribution value="positive" recordCount="5.0"/>
+                    <ScoreDistribution value="negative" recordCount="1.0"/>
+                  </Node>
+                </Node>
+                <Node id="96" score="negative" recordCount="941.0">
+                  <SimplePredicate field="z3_3" operator="greaterThan" value="13.200462490344833"/>
+                  <ScoreDistribution value="positive" recordCount="3.0"/>
+                  <ScoreDistribution value="negative" recordCount="938.0"/>
+                </Node>
+              </Node>
+            </Node>
+            <Node id="117" score="negative" recordCount="74.0">
+              <SimplePredicate field="z1_1" operator="greaterThan" value="15.499067952766886"/>
+              <ScoreDistribution value="positive" recordCount="17.0"/>
+              <ScoreDistribution value="negative" recordCount="57.0"/>
+              <Node id="118" score="positive" recordCount="22.0">
+                <SimplePredicate field="z3_3" operator="lessOrEqual" value="20.351273554382708"/>
+                <ScoreDistribution value="positive" recordCount="13.0"/>
+                <ScoreDistribution value="negative" recordCount="9.0"/>
+                <Node id="119" score="negative" recordCount="14.0">
+                  <SimplePredicate field="y3_2" operator="lessOrEqual" value="-0.015964576040077293"/>
+                  <ScoreDistribution value="positive" recordCount="5.0"/>
+                  <ScoreDistribution value="negative" recordCount="9.0"/>
+                  <Node id="120" score="positive" recordCount="6.0">
+                    <SimplePredicate field="z3_3" operator="lessOrEqual" value="14.189861403025596"/>
+                    <ScoreDistribution value="positive" recordCount="5.0"/>
+                    <ScoreDistribution value="negative" recordCount="1.0"/>
+                  </Node>
+                  <Node id="123" score="negative" recordCount="8.0">
+                    <SimplePredicate field="z3_3" operator="greaterThan" value="14.189861403025596"/>
+                    <ScoreDistribution value="positive" recordCount="0.0"/>
+                    <ScoreDistribution value="negative" recordCount="8.0"/>
+                  </Node>
+                </Node>
+                <Node id="124" score="positive" recordCount="8.0">
+                  <SimplePredicate field="y3_2" operator="greaterThan" value="-0.015964576040077293"/>
+                  <ScoreDistribution value="positive" recordCount="8.0"/>
+                  <ScoreDistribution value="negative" recordCount="0.0"/>
+                </Node>
+              </Node>
+              <Node id="125" score="negative" recordCount="52.0">
+                <SimplePredicate field="z3_3" operator="greaterThan" value="20.351273554382708"/>
+                <ScoreDistribution value="positive" recordCount="4.0"/>
+                <ScoreDistribution value="negative" recordCount="48.0"/>
+                <Node id="126" score="positive" recordCount="5.0">
+                  <SimplePredicate field="x2_1" operator="lessOrEqual" value="-0.014751409191732227"/>
+                  <ScoreDistribution value="positive" recordCount="3.0"/>
+                  <ScoreDistribution value="negative" recordCount="2.0"/>
+                  <Node id="127" score="negative" recordCount="2.0">
+                    <SimplePredicate field="y3_4" operator="lessOrEqual" value="-0.048373929045093904"/>
+                    <ScoreDistribution value="positive" recordCount="0.0"/>
+                    <ScoreDistribution value="negative" recordCount="2.0"/>
+                  </Node>
+                  <Node id="128" score="positive" recordCount="3.0">
+                    <SimplePredicate field="y3_4" operator="greaterThan" value="-0.048373929045093904"/>
+                    <ScoreDistribution value="positive" recordCount="3.0"/>
+                    <ScoreDistribution value="negative" recordCount="0.0"/>
+                  </Node>
+                </Node>
+                <Node id="129" score="negative" recordCount="47.0">
+                  <SimplePredicate field="x2_1" operator="greaterThan" value="-0.014751409191732227"/>
+                  <ScoreDistribution value="positive" recordCount="1.0"/>
+                  <ScoreDistribution value="negative" recordCount="46.0"/>
+                </Node>
+              </Node>
+            </Node>
+          </Node>
+        </Node>
+        <Node id="132" score="positive" recordCount="324.0">
+          <SimplePredicate field="z1_1" operator="greaterThan" value="17.176507664525634"/>
+          <ScoreDistribution value="positive" recordCount="216.0"/>
+          <ScoreDistribution value="negative" recordCount="108.0"/>
+          <Node id="133" score="positive" recordCount="230.0">
+            <SimplePredicate field="z3_3" operator="lessOrEqual" value="23.649753138199177"/>
+            <ScoreDistribution value="positive" recordCount="199.0"/>
+            <ScoreDistribution value="negative" recordCount="31.0"/>
+            <Node id="134" score="negative" recordCount="23.0">
+              <SimplePredicate field="y3_4" operator="lessOrEqual" value="-0.05711073358037319"/>
+              <ScoreDistribution value="positive" recordCount="11.0"/>
+              <ScoreDistribution value="negative" recordCount="12.0"/>
+              <Node id="135" score="positive" recordCount="13.0">
+                <SimplePredicate field="x1_4" operator="lessOrEqual" value="-0.03519856918291153"/>
+                <ScoreDistribution value="positive" recordCount="10.0"/>
+                <ScoreDistribution value="negative" recordCount="3.0"/>
+                <Node id="136" score="positive" recordCount="10.0">
+                  <SimplePredicate field="z3_4" operator="lessOrEqual" value="14.50180356659516"/>
+                  <ScoreDistribution value="positive" recordCount="10.0"/>
+                  <ScoreDistribution value="negative" recordCount="0.0"/>
+                </Node>
+                <Node id="137" score="negative" recordCount="3.0">
+                  <SimplePredicate field="z3_4" operator="greaterThan" value="14.50180356659516"/>
+                  <ScoreDistribution value="positive" recordCount="0.0"/>
+                  <ScoreDistribution value="negative" recordCount="3.0"/>
+                </Node>
+              </Node>
+              <Node id="138" score="negative" recordCount="10.0">
+                <SimplePredicate field="x1_4" operator="greaterThan" value="-0.03519856918291153"/>
+                <ScoreDistribution value="positive" recordCount="1.0"/>
+                <ScoreDistribution value="negative" recordCount="9.0"/>
+              </Node>
+            </Node>
+            <Node id="141" score="positive" recordCount="207.0">
+              <SimplePredicate field="y3_4" operator="greaterThan" value="-0.05711073358037319"/>
+              <ScoreDistribution value="positive" recordCount="188.0"/>
+              <ScoreDistribution value="negative" recordCount="19.0"/>
+              <Node id="142" score="negative" recordCount="4.0">
+                <SimplePredicate field="z2_4" operator="lessOrEqual" value="5.63063087186326"/>
+                <ScoreDistribution value="positive" recordCount="1.0"/>
+                <ScoreDistribution value="negative" recordCount="3.0"/>
+              </Node>
+              <Node id="145" score="positive" recordCount="203.0">
+                <SimplePredicate field="z2_4" operator="greaterThan" value="5.63063087186326"/>
+                <ScoreDistribution value="positive" recordCount="187.0"/>
+                <ScoreDistribution value="negative" recordCount="16.0"/>
+                <Node id="146" score="negative" recordCount="7.0">
+                  <SimplePredicate field="x3_1" operator="lessOrEqual" value="-0.03789749934139745"/>
+                  <ScoreDistribution value="positive" recordCount="3.0"/>
+                  <ScoreDistribution value="negative" recordCount="4.0"/>
+                  <Node id="147" score="negative" recordCount="4.0">
+                    <SimplePredicate field="z3_2" operator="lessOrEqual" value="9.989705969660495"/>
+                    <ScoreDistribution value="positive" recordCount="0.0"/>
+                    <ScoreDistribution value="negative" recordCount="4.0"/>
+                  </Node>
+                  <Node id="148" score="positive" recordCount="3.0">
+                    <SimplePredicate field="z3_2" operator="greaterThan" value="9.989705969660495"/>
+                    <ScoreDistribution value="positive" recordCount="3.0"/>
+                    <ScoreDistribution value="negative" recordCount="0.0"/>
+                  </Node>
+                </Node>
+                <Node id="149" score="positive" recordCount="196.0">
+                  <SimplePredicate field="x3_1" operator="greaterThan" value="-0.03789749934139745"/>
+                  <ScoreDistribution value="positive" recordCount="184.0"/>
+                  <ScoreDistribution value="negative" recordCount="12.0"/>
+                  <Node id="150" score="positive" recordCount="138.0">
+                    <SimplePredicate field="z3_3" operator="lessOrEqual" value="18.297026346380697"/>
+                    <ScoreDistribution value="positive" recordCount="136.0"/>
+                    <ScoreDistribution value="negative" recordCount="2.0"/>
+                  </Node>
+                  <Node id="157" score="positive" recordCount="58.0">
+                    <SimplePredicate field="z3_3" operator="greaterThan" value="18.297026346380697"/>
+                    <ScoreDistribution value="positive" recordCount="48.0"/>
+                    <ScoreDistribution value="negative" recordCount="10.0"/>
+                    <Node id="158" score="negative" recordCount="5.0">
+                      <SimplePredicate field="z2_3" operator="lessOrEqual" value="8.398395371535923"/>
+                      <ScoreDistribution value="positive" recordCount="1.0"/>
+                      <ScoreDistribution value="negative" recordCount="4.0"/>
+                    </Node>
+                    <Node id="161" score="positive" recordCount="53.0">
+                      <SimplePredicate field="z2_3" operator="greaterThan" value="8.398395371535923"/>
+                      <ScoreDistribution value="positive" recordCount="47.0"/>
+                      <ScoreDistribution value="negative" recordCount="6.0"/>
+                      <Node id="162" score="positive" recordCount="11.0">
+                        <SimplePredicate field="x3_4" operator="lessOrEqual" value="-0.04658207732242243"/>
+                        <ScoreDistribution value="positive" recordCount="7.0"/>
+                        <ScoreDistribution value="negative" recordCount="4.0"/>
+                        <Node id="163" score="negative" recordCount="3.0">
+                          <SimplePredicate field="y3_4" operator="lessOrEqual" value="-0.03542747669169874"/>
+                          <ScoreDistribution value="positive" recordCount="0.0"/>
+                          <ScoreDistribution value="negative" recordCount="3.0"/>
+                        </Node>
+                        <Node id="164" score="positive" recordCount="8.0">
+                          <SimplePredicate field="y3_4" operator="greaterThan" value="-0.03542747669169874"/>
+                          <ScoreDistribution value="positive" recordCount="7.0"/>
+                          <ScoreDistribution value="negative" recordCount="1.0"/>
+                        </Node>
+                      </Node>
+                      <Node id="167" score="positive" recordCount="42.0">
+                        <SimplePredicate field="x3_4" operator="greaterThan" value="-0.04658207732242243"/>
+                        <ScoreDistribution value="positive" recordCount="40.0"/>
+                        <ScoreDistribution value="negative" recordCount="2.0"/>
+                        <Node id="168" score="positive" recordCount="5.0">
+                          <SimplePredicate field="y1_2" operator="lessOrEqual" value="-0.09505564373212458"/>
+                          <ScoreDistribution value="positive" recordCount="3.0"/>
+                          <ScoreDistribution value="negative" recordCount="2.0"/>
+                          <Node id="169" score="negative" recordCount="2.0">
+                            <SimplePredicate field="y3_4" operator="lessOrEqual" value="-0.009850338261126869"/>
+                            <ScoreDistribution value="positive" recordCount="0.0"/>
+                            <ScoreDistribution value="negative" recordCount="2.0"/>
+                          </Node>
+                          <Node id="170" score="positive" recordCount="3.0">
+                            <SimplePredicate field="y3_4" operator="greaterThan" value="-0.009850338261126869"/>
+                            <ScoreDistribution value="positive" recordCount="3.0"/>
+                            <ScoreDistribution value="negative" recordCount="0.0"/>
+                          </Node>
+                        </Node>
+                        <Node id="171" score="positive" recordCount="37.0">
+                          <SimplePredicate field="y1_2" operator="greaterThan" value="-0.09505564373212458"/>
+                          <ScoreDistribution value="positive" recordCount="37.0"/>
+                          <ScoreDistribution value="negative" recordCount="0.0"/>
+                        </Node>
+                      </Node>
+                    </Node>
+                  </Node>
+                </Node>
+              </Node>
+            </Node>
+          </Node>
+          <Node id="172" score="negative" recordCount="94.0">
+            <SimplePredicate field="z3_3" operator="greaterThan" value="23.649753138199177"/>
+            <ScoreDistribution value="positive" recordCount="17.0"/>
+            <ScoreDistribution value="negative" recordCount="77.0"/>
+            <Node id="173" score="negative" recordCount="73.0">
+              <SimplePredicate field="z1_1" operator="lessOrEqual" value="27.87831331522427"/>
+              <ScoreDistribution value="positive" recordCount="3.0"/>
+              <ScoreDistribution value="negative" recordCount="70.0"/>
+              <Node id="174" score="negative" recordCount="13.0">
+                <SimplePredicate field="z3_2" operator="lessOrEqual" value="21.893485139127506"/>
+                <ScoreDistribution value="positive" recordCount="3.0"/>
+                <ScoreDistribution value="negative" recordCount="10.0"/>
+                <Node id="175" score="negative" recordCount="10.0">
+                  <SimplePredicate field="x1_2" operator="lessOrEqual" value="0.07683404335629512"/>
+                  <ScoreDistribution value="positive" recordCount="0.0"/>
+                  <ScoreDistribution value="negative" recordCount="10.0"/>
+                </Node>
+                <Node id="176" score="positive" recordCount="3.0">
+                  <SimplePredicate field="x1_2" operator="greaterThan" value="0.07683404335629512"/>
+                  <ScoreDistribution value="positive" recordCount="3.0"/>
+                  <ScoreDistribution value="negative" recordCount="0.0"/>
+                </Node>
+              </Node>
+              <Node id="177" score="negative" recordCount="60.0">
+                <SimplePredicate field="z3_2" operator="greaterThan" value="21.893485139127506"/>
+                <ScoreDistribution value="positive" recordCount="0.0"/>
+                <ScoreDistribution value="negative" recordCount="60.0"/>
+              </Node>
+            </Node>
+            <Node id="178" score="positive" recordCount="21.0">
+              <SimplePredicate field="z1_1" operator="greaterThan" value="27.87831331522427"/>
+              <ScoreDistribution value="positive" recordCount="14.0"/>
+              <ScoreDistribution value="negative" recordCount="7.0"/>
+              <Node id="179" score="positive" recordCount="14.0">
+                <SimplePredicate field="z3_3" operator="lessOrEqual" value="39.598270597162085"/>
+                <ScoreDistribution value="positive" recordCount="14.0"/>
+                <ScoreDistribution value="negative" recordCount="0.0"/>
+              </Node>
+              <Node id="180" score="negative" recordCount="7.0">
+                <SimplePredicate field="z3_3" operator="greaterThan" value="39.598270597162085"/>
+                <ScoreDistribution value="positive" recordCount="0.0"/>
+                <ScoreDistribution value="negative" recordCount="7.0"/>
+              </Node>
+            </Node>
+          </Node>
+        </Node>
+      </Node>
+    </Node>
+  </TreeModel>
+</PMML>

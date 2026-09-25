@@ -92,39 +92,64 @@ function(input, output, session) {
     return(values$batchesReady)
   })
   outputOptions(output, "batchesReady", suspendWhenHidden = FALSE)
+
+  # Clear results that belong to a previously loaded dataset.
+  reset_analysis_state <- function() {
+    values$rnafoldResults <- NULL
+    values$nernaResults <- NULL
+    values$dinucleotideResults <- NULL
+    values$randomResults <- NULL
+    values$nernaStructures <- NULL
+    values$dinucStructures <- NULL
+    values$randomStructures <- NULL
+    values$selectedComparison <- NULL
+    values$comparisonSummary <- NULL
+    values$sequenceBatches <- NULL
+    values$batchesReady <- FALSE
+  }
   
   # Output variable to check if RNAfold has been run for all sequences
   output$allStructuresCalculated <- reactive({
-    # Check if structures exist for all generated methods
-    structures_ready <- FALSE
-    
-    # At minimum, we need original structures
-    if (!is.null(values$rnafoldResults)) {
-      structures_ready <- TRUE
-      
-      # If NeRNA exists, check if structures are calculated
-      if (!is.null(values$nernaResults)) {
-        if (is.null(values$nernaStructures) || length(values$nernaStructures) == 0) {
-          structures_ready <- FALSE
-        }
-      }
-      
-      # If Dinucleotide exists, check if structures are calculated
-      if (!is.null(values$dinucleotideResults)) {
-        if (is.null(values$dinucStructures) || length(values$dinucStructures) == 0) {
-          structures_ready <- FALSE
-        }
-      }
-      
-      # If Random exists, check if structures are calculated
-      if (!is.null(values$randomResults)) {
-        if (is.null(values$randomStructures) || length(values$randomStructures) == 0) {
-          structures_ready <- FALSE
-        }
-      }
+    cache_is_complete <- function(cache, sequences) {
+      if (is.null(cache) || length(cache) != length(sequences)) return(FALSE)
+
+      all(vapply(seq_along(sequences), function(i) {
+        result <- cache[[i]]
+        has_valid_structure(result$structure, nchar(sequences[i])) &&
+          has_valid_mfe(result$mfe)
+      }, logical(1)))
     }
-    
-    return(structures_ready)
+
+    if (is.null(values$rnafoldResults) || is.null(values$fastaData) ||
+        nrow(values$rnafoldResults) != nrow(values$fastaData)) {
+      return(FALSE)
+    }
+
+    original_ready <- all(vapply(seq_len(nrow(values$rnafoldResults)), function(i) {
+      has_valid_structure(
+        values$rnafoldResults$SecondaryStructure[i],
+        nchar(values$rnafoldResults$Sequence[i])
+      ) && has_valid_mfe(values$rnafoldResults$MFE[i])
+    }, logical(1)))
+
+    if (!original_ready) return(FALSE)
+
+    if (!is.null(values$nernaResults) &&
+        !cache_is_complete(values$nernaStructures, values$nernaResults$NegativeSequence)) {
+      return(FALSE)
+    }
+
+    if (!is.null(values$dinucleotideResults) &&
+        !cache_is_complete(values$dinucStructures, values$dinucleotideResults$NegativeSequence)) {
+      return(FALSE)
+    }
+
+    if (!is.null(values$randomResults) &&
+        !cache_is_complete(values$randomStructures, values$randomResults$NegativeSequence)) {
+      return(FALSE)
+    }
+
+    TRUE
   })
   outputOptions(output, "allStructuresCalculated", suspendWhenHidden = FALSE)
   
@@ -194,6 +219,10 @@ function(input, output, session) {
       batches <- split_sequences_to_batches(fasta_data, batch_size = max_seqs)
       
       # Store batches for download
+      reset_analysis_state()
+      values$fastaData <- NULL
+      values$filteredSeqs <- NULL
+      values$rnaType <- input$rnaType
       values$sequenceBatches <- batches
       values$batchesReady <- TRUE
       values$dataLoaded <- FALSE  # Don't allow analysis
@@ -202,8 +231,8 @@ function(input, output, session) {
     }
     
     # If within limit, proceed normally
+    reset_analysis_state()
     values$fastaData <- fasta_data
-    values$batchesReady <- FALSE
     
     # Store filtered sequences for display in Overview
     filtered_sequences <- attr(fasta_data, "filtered_sequences")
@@ -252,6 +281,72 @@ function(input, output, session) {
     
     # Automatically switch to overview tab
     updateTabItems(session, "sidebar", "overview")
+  })
+
+  # Load a small bundled dataset for a reproducible first-use example.
+  load_example_data <- function(selected_type) {
+    example_files <- c(
+      mirna = file.path("cases", "miRNA.fa"),
+      circrna = file.path("cases", "circRNA_1000.fa"),
+      lncrna = file.path("cases", "lncRNA_1000.fa"),
+      trna = file.path("cases", "tRNA.fasta")
+    )
+
+    example_file <- unname(example_files[selected_type])
+
+    if (length(example_file) != 1 || is.na(example_file)) {
+      showNotification(
+        "Example data are available for miRNA, circRNA, lncRNA, and tRNA. Please select one of these RNA types.",
+        type = "warning",
+        duration = 8
+      )
+      return(NULL)
+    }
+
+    if (!file.exists(example_file)) {
+      showNotification(
+        paste("Bundled example file was not found:", example_file),
+        type = "error",
+        duration = 10
+      )
+      return(NULL)
+    }
+
+    fasta_data <- readFastaToTable(example_file, rnaType = selected_type)
+    if (is.null(fasta_data) || nrow(fasta_data) == 0) {
+      showNotification("The bundled example file contains no usable sequences.", type = "error")
+      return(NULL)
+    }
+
+    fasta_data <- fasta_data[seq_len(min(10L, nrow(fasta_data))), , drop = FALSE]
+    attr(fasta_data, "exceeds_limit") <- FALSE
+    attr(fasta_data, "total_sequences") <- nrow(fasta_data)
+    attr(fasta_data, "max_sequences") <- 250L
+    attr(fasta_data, "original_count") <- nrow(fasta_data)
+    attr(fasta_data, "filtered_count") <- 0L
+    attr(fasta_data, "filtered_sequences") <- fasta_data[0, , drop = FALSE]
+
+    reset_analysis_state()
+    values$fastaData <- fasta_data
+    values$filteredSeqs <- NULL
+    values$rnaType <- selected_type
+    values$dataLoaded <- TRUE
+    updateSelectInput(session, "rnaType", selected = selected_type)
+
+    showNotification(
+      paste("Loaded", nrow(fasta_data), selected_type, "example sequences."),
+      type = "message",
+      duration = 6
+    )
+    updateTabItems(session, "sidebar", "overview")
+  }
+
+  observeEvent(input$loadExampleBtn, {
+    load_example_data(input$rnaType)
+  })
+
+  observeEvent(input$loadHomeExampleBtn, {
+    load_example_data(input$homeExampleType)
   })
   
   # Display sequence table
@@ -1090,14 +1185,15 @@ function(input, output, session) {
     gc_count <- sum(gregexpr("[GC]", sequence)[[1]] > 0)
     gc_content <- round(gc_count / length * 100, 1)
     
-    # Paired and unpaired bases (if structure is available)
-    paired_bases <- 0
-    unpaired_bases <- length
-    
-    if (!is.null(structure)) {
-      paired_count <- sum(gregexpr("\\(|\\)", structure)[[1]] > 0)
-      paired_bases <- paired_count
-      unpaired_bases <- length - paired_count
+    # Paired and unpaired bases are reported only for a valid RNAfold
+    # dot-bracket structure. Missing structures must remain missing.
+    paired_bases <- NA_real_
+    unpaired_bases <- NA_real_
+
+    if (has_valid_structure(structure, length)) {
+      structure_chars <- strsplit(structure, "", fixed = TRUE)[[1]]
+      paired_bases <- sum(structure_chars %in% c("(", ")"))
+      unpaired_bases <- sum(structure_chars == ".")
     }
     
     return(list(
@@ -1106,6 +1202,35 @@ function(input, output, session) {
       UnpairedBases = unpaired_bases,
       GCContent = gc_content
     ))
+  }
+
+  # RNAfold-derived values must only be displayed when RNAfold returned a
+  # valid dot-bracket structure or a finite MFE value. Missing calculations
+  # are represented as NULL/NA rather than estimated or substituted values.
+  has_valid_structure <- function(structure, expected_length = NULL) {
+    if (is.null(structure) || length(structure) != 1 || is.na(structure) || !nzchar(structure)) {
+      return(FALSE)
+    }
+
+    if (!grepl("^[().]+$", structure)) {
+      return(FALSE)
+    }
+
+    structure_chars <- strsplit(structure, "", fixed = TRUE)[[1]]
+    balance <- cumsum(ifelse(structure_chars == "(", 1L, ifelse(structure_chars == ")", -1L, 0L)))
+    if (any(balance < 0L) || tail(balance, 1) != 0L) {
+      return(FALSE)
+    }
+
+    if (!is.null(expected_length) && nchar(structure) != expected_length) {
+      return(FALSE)
+    }
+
+    TRUE
+  }
+
+  has_valid_mfe <- function(mfe) {
+    !is.null(mfe) && length(mfe) == 1 && !is.na(mfe) && is.finite(mfe)
   }
   
   # Helper function to calculate similarity metrics and create results data frame
@@ -1120,8 +1245,6 @@ function(input, output, session) {
     seq_identity <- sapply(similarity_metrics, function(x) x$sequence_identity)
     dinuc_similarity <- sapply(similarity_metrics, function(x) x$dinucleotide_similarity)
     gc_similarity <- sapply(similarity_metrics, function(x) x$gc_similarity)
-    motif_preservation <- sapply(similarity_metrics, function(x) x$motif_preservation)
-    overall_similarity <- sapply(similarity_metrics, function(x) x$overall_similarity)
     
     # Create base data frame
     result_df <- data.frame(
@@ -1131,8 +1254,6 @@ function(input, output, session) {
       SequenceIdentity = round(seq_identity, 2),
       DinucleotideSimilarity = round(dinuc_similarity, 2),
       GCSimilarity = round(gc_similarity, 2),
-      MotifPreservation = round(motif_preservation, 2),
-      OverallSimilarity = round(overall_similarity, 2),
       stringsAsFactors = FALSE
     )
     
@@ -1149,152 +1270,87 @@ function(input, output, session) {
   # Generate summary statistics
   generateSummaryStats <- function() {
     req(values$fastaData)
-    
-    # Initialize vectors for all methods
-    methods <- c("Original", "NeRNA", "Dinucleotide", "Random")
-    avg_mfe <- numeric(4)
-    avg_length <- numeric(4)
-    avg_paired <- numeric(4)
-    avg_unpaired <- numeric(4)
-    avg_gc <- numeric(4)
-    
-    # Calculate Original stats
-    original_seqs <- values$fastaData$Sequence
-    original_stats <- lapply(original_seqs, calculateSequenceStats)
-    
-    avg_length[1] <- round(mean(sapply(original_stats, function(x) x$Length)), 1)
-    avg_paired[1] <- round(mean(sapply(original_stats, function(x) x$PairedBases)), 1)
-    avg_unpaired[1] <- round(mean(sapply(original_stats, function(x) x$UnpairedBases)), 1)
-    avg_gc[1] <- round(mean(sapply(original_stats, function(x) x$GCContent)), 1)
-    
-    # If RNAfold results are available
-    if (!is.null(values$rnafoldResults)) {
-      mfe_values <- values$rnafoldResults$MFE
-      avg_mfe[1] <- round(mean(mfe_values), 2)
-      
-      # Update paired/unpaired counts with structure info
-      structures <- values$rnafoldResults$SecondaryStructure
-      for (i in 1:length(structures)) {
-        if (i <= length(structures)) {
-          stats <- calculateSequenceStats(original_seqs[i], structures[i])
-          original_stats[[i]]$PairedBases <- stats$PairedBases
-          original_stats[[i]]$UnpairedBases <- stats$UnpairedBases
-        }
-      }
-      avg_paired[1] <- round(mean(sapply(original_stats, function(x) x$PairedBases)), 1)
-      avg_unpaired[1] <- round(mean(sapply(original_stats, function(x) x$UnpairedBases)), 1)
-    } else {
-      avg_mfe[1] <- NA
+
+    safe_mean <- function(x, digits = 1) {
+      x <- suppressWarnings(as.numeric(x))
+      x <- x[is.finite(x)]
+      if (length(x) == 0) return(NA_real_)
+      round(mean(x), digits)
     }
-    
-    # Calculate NeRNA stats if available
-    if (!is.null(values$nernaResults)) {
-      nerna_seqs <- values$nernaResults$NegativeSequence
-      nerna_stats <- lapply(nerna_seqs, calculateSequenceStats)
-      
-      avg_length[2] <- round(mean(sapply(nerna_stats, function(x) x$Length)), 1)
-      avg_paired[2] <- round(mean(sapply(nerna_stats, function(x) x$PairedBases)), 1)
-      avg_unpaired[2] <- round(mean(sapply(nerna_stats, function(x) x$UnpairedBases)), 1)
-      avg_gc[2] <- round(mean(sapply(nerna_stats, function(x) x$GCContent)), 1)
-      
-      # Calculate real MFE for NeRNA sequences using cached structures
-      if (!is.null(values$nernaStructures) && length(values$nernaStructures) > 0) {
-        mfe_values <- sapply(values$nernaStructures, function(x) {
-          if (!is.null(x$mfe) && !is.na(x$mfe)) x$mfe else NA
-        })
-        mfe_values <- mfe_values[!is.na(mfe_values)]
-        if (length(mfe_values) > 0) {
-          avg_mfe[2] <- round(mean(mfe_values), 2)
+
+    structure_from_cache <- function(cache, index, expected_length) {
+      if (is.null(cache) || length(cache) < index || is.null(cache[[index]])) return(NULL)
+      structure <- cache[[index]]$structure
+      if (has_valid_structure(structure, expected_length)) structure else NULL
+    }
+
+    mfe_from_cache <- function(cache, index) {
+      if (is.null(cache) || length(cache) < index || is.null(cache[[index]])) return(NA_real_)
+      mfe <- cache[[index]]$mfe
+      if (has_valid_mfe(mfe)) as.numeric(mfe) else NA_real_
+    }
+
+    summarize_method <- function(sequences, structures = NULL, mfe_values = NULL, cache = NULL) {
+      if (is.null(sequences) || length(sequences) == 0) {
+        return(c(MFE = NA, Length = NA, Paired = NA, Unpaired = NA, GC = NA))
+      }
+
+      stats <- lapply(seq_along(sequences), function(i) {
+        structure <- if (!is.null(cache)) {
+          structure_from_cache(cache, i, nchar(sequences[i]))
+        } else if (!is.null(structures) && length(structures) >= i &&
+                   has_valid_structure(structures[i], nchar(sequences[i]))) {
+          structures[i]
         } else {
-          avg_mfe[2] <- NA
+          NULL
         }
-      } else {
-        avg_mfe[2] <- NA
+        calculateSequenceStats(sequences[i], structure)
+      })
+
+      if (!is.null(cache)) {
+        mfe_values <- vapply(seq_along(sequences), function(i) {
+          mfe_from_cache(cache, i)
+        }, numeric(1))
       }
-    } else {
-      avg_length[2] <- NA
-      avg_paired[2] <- NA
-      avg_unpaired[2] <- NA
-      avg_gc[2] <- NA
-      avg_mfe[2] <- NA
+
+      c(
+        MFE = safe_mean(mfe_values, 2),
+        Length = safe_mean(vapply(stats, function(x) x$Length, numeric(1))),
+        Paired = safe_mean(vapply(stats, function(x) x$PairedBases, numeric(1))),
+        Unpaired = safe_mean(vapply(stats, function(x) x$UnpairedBases, numeric(1))),
+        GC = safe_mean(vapply(stats, function(x) x$GCContent, numeric(1)))
+      )
     }
-    
-    # Calculate Dinucleotide Shuffling stats if available
-    if (!is.null(values$dinucleotideResults)) {
-      dinu_seqs <- values$dinucleotideResults$NegativeSequence
-      dinu_stats <- lapply(dinu_seqs, calculateSequenceStats)
-      
-      avg_length[3] <- round(mean(sapply(dinu_stats, function(x) x$Length)), 1)
-      avg_paired[3] <- round(mean(sapply(dinu_stats, function(x) x$PairedBases)), 1)
-      avg_unpaired[3] <- round(mean(sapply(dinu_stats, function(x) x$UnpairedBases)), 1)
-      avg_gc[3] <- round(mean(sapply(dinu_stats, function(x) x$GCContent)), 1)
-      
-      # Calculate real MFE for Dinucleotide sequences using cached structures
-      if (!is.null(values$dinucStructures) && length(values$dinucStructures) > 0) {
-        mfe_values <- sapply(values$dinucStructures, function(x) {
-          if (!is.null(x$mfe) && !is.na(x$mfe)) x$mfe else NA
-        })
-        mfe_values <- mfe_values[!is.na(mfe_values)]
-        if (length(mfe_values) > 0) {
-          avg_mfe[3] <- round(mean(mfe_values), 2)
-        } else {
-          avg_mfe[3] <- NA
-        }
-      } else {
-        avg_mfe[3] <- NA
-      }
-    } else {
-      avg_length[3] <- NA
-      avg_paired[3] <- NA
-      avg_unpaired[3] <- NA
-      avg_gc[3] <- NA
-      avg_mfe[3] <- NA
-    }
-    
-    # Calculate Random Shuffling stats if available
-    if (!is.null(values$randomResults)) {
-      random_seqs <- values$randomResults$NegativeSequence
-      random_stats <- lapply(random_seqs, calculateSequenceStats)
-      
-      avg_length[4] <- round(mean(sapply(random_stats, function(x) x$Length)), 1)
-      avg_paired[4] <- round(mean(sapply(random_stats, function(x) x$PairedBases)), 1)
-      avg_unpaired[4] <- round(mean(sapply(random_stats, function(x) x$UnpairedBases)), 1)
-      avg_gc[4] <- round(mean(sapply(random_stats, function(x) x$GCContent)), 1)
-      
-      # Calculate real MFE for Random sequences using cached structures
-      if (!is.null(values$randomStructures) && length(values$randomStructures) > 0) {
-        mfe_values <- sapply(values$randomStructures, function(x) {
-          if (!is.null(x$mfe) && !is.na(x$mfe)) x$mfe else NA
-        })
-        mfe_values <- mfe_values[!is.na(mfe_values)]
-        if (length(mfe_values) > 0) {
-          avg_mfe[4] <- round(mean(mfe_values), 2)
-        } else {
-          avg_mfe[4] <- NA
-        }
-      } else {
-        avg_mfe[4] <- NA
-      }
-    } else {
-      avg_length[4] <- NA
-      avg_paired[4] <- NA
-      avg_unpaired[4] <- NA
-      avg_gc[4] <- NA
-      avg_mfe[4] <- NA
-    }
-    
-    # Create summary data frame
-    summary_df <- data.frame(
-      Method = methods,
-      Avg.MFE = avg_mfe,
-      Avg.Length = avg_length,
-      Avg.Paired.Bases = avg_paired,
-      Avg.Unpaired.Bases = avg_unpaired,
-      Avg.GC.Content.... = avg_gc,
-      stringsAsFactors = FALSE
+
+    original_summary <- summarize_method(
+      values$fastaData$Sequence,
+      structures = if (!is.null(values$rnafoldResults)) values$rnafoldResults$SecondaryStructure else NULL,
+      mfe_values = if (!is.null(values$rnafoldResults)) values$rnafoldResults$MFE else NULL
     )
-    
-    return(summary_df)
+    nerna_summary <- summarize_method(
+      if (!is.null(values$nernaResults)) values$nernaResults$NegativeSequence else NULL,
+      cache = values$nernaStructures
+    )
+    dinucleotide_summary <- summarize_method(
+      if (!is.null(values$dinucleotideResults)) values$dinucleotideResults$NegativeSequence else NULL,
+      cache = values$dinucStructures
+    )
+    random_summary <- summarize_method(
+      if (!is.null(values$randomResults)) values$randomResults$NegativeSequence else NULL,
+      cache = values$randomStructures
+    )
+
+    summaries <- rbind(original_summary, nerna_summary, dinucleotide_summary, random_summary)
+    data.frame(
+      Method = c("Original", "NeRNA", "Dinucleotide", "Random"),
+      Avg.MFE = summaries[, "MFE"],
+      Avg.Length = summaries[, "Length"],
+      Avg.Paired.Bases = summaries[, "Paired"],
+      Avg.Unpaired.Bases = summaries[, "Unpaired"],
+      Avg.GC.Content.... = summaries[, "GC"],
+      stringsAsFactors = FALSE,
+      row.names = NULL
+    )
   }
   
   # Generate summary statistics table
@@ -1360,24 +1416,34 @@ function(input, output, session) {
       # First, check if result exists in cache
       if (!is.null(cache) && acc %in% names(cache)) {
         message("Using cached structure for: ", acc)
-        return(cache[[acc]])
+        cached_result <- cache[[acc]]
+        return(list(
+          structure = if (has_valid_structure(cached_result$structure, nchar(seq))) cached_result$structure else NULL,
+          mfe = if (has_valid_mfe(cached_result$mfe)) cached_result$mfe else NA_real_
+        ))
       }
       
       # If not in cache, calculate using RNAfold
       tryCatch({
         message("Running RNAfold for sequence: ", substr(seq, 1, 20), "... (not in cache)")
         result <- quick_rnafold(seq)
-        message("RNAfold result - Structure: ", substr(result$structure, 1, 20), ", MFE: ", result$mfe)
+        valid_structure <- has_valid_structure(result$structure, nchar(seq))
+        valid_mfe <- has_valid_mfe(result$mfe)
+        message(
+          "RNAfold result - Structure: ",
+          if (valid_structure) substr(result$structure, 1, 20) else "NOT CALCULATED",
+          ", MFE: ",
+          if (valid_mfe) result$mfe else "NOT CALCULATED"
+        )
         return(list(
-          structure = result$structure,
-          mfe = result$mfe
+          structure = if (valid_structure) result$structure else NULL,
+          mfe = if (valid_mfe) result$mfe else NA_real_
         ))
       }, error = function(e) {
         message("RNAfold error for sequence: ", substr(seq, 1, 20), " - Error: ", e$message)
-        # Fallback to simple unpaired structure if RNAfold fails
         return(list(
-          structure = paste(rep(".", nchar(seq)), collapse = ""),
-          mfe = NA
+          structure = NULL,
+          mfe = NA_real_
         ))
       })
     }
@@ -1442,12 +1508,14 @@ function(input, output, session) {
       div(style = "padding: 10px; background-color: #f8f9fa; border-radius: 5px; margin-bottom: 15px;",
         h5("Original Sequence:"),
         p(style = "word-break: break-all; font-family: monospace;", comp$Original$Sequence),
-        if (!is.null(comp$Original$Structure)) {
+        if (has_valid_structure(comp$Original$Structure, nchar(comp$Original$Sequence))) {
           div(
-            h5("Original Structure:"),
+            h5("RNAfold-predicted Original Structure:"),
             p(style = "word-break: break-all; font-family: monospace;", comp$Original$Structure),
-            p(paste("MFE:", comp$Original$MFE))
+            p(paste("RNAfold MFE:", if (has_valid_mfe(comp$Original$MFE)) comp$Original$MFE else "Not calculated"))
           )
+        } else {
+          p(style = "color: #856404; font-weight: bold;", "RNAfold structure and MFE: Not calculated")
         }
       ),
       
@@ -1455,12 +1523,14 @@ function(input, output, session) {
         div(style = "padding: 10px; background-color: #d4edda; border-radius: 5px; margin-bottom: 15px;",
           h5("NeRNA Generated Sequence:"),
           p(style = "word-break: break-all; font-family: monospace;", comp$NeRNA$Sequence),
-          if (!is.null(comp$NeRNA$Structure)) {
+          if (has_valid_structure(comp$NeRNA$Structure, nchar(comp$NeRNA$Sequence))) {
             div(
-              h5("Estimated Secondary Structure:"),
+              h5("RNAfold-predicted Secondary Structure:"),
               p(style = "word-break: break-all; font-family: monospace;", comp$NeRNA$Structure),
-              p(paste("Estimated MFE:", comp$NeRNA$MFE))
+              p(paste("RNAfold MFE:", if (has_valid_mfe(comp$NeRNA$MFE)) comp$NeRNA$MFE else "Not calculated"))
             )
+          } else {
+            p(style = "color: #856404; font-weight: bold;", "RNAfold structure and MFE: Not calculated")
           }
         )
       },
@@ -1469,12 +1539,14 @@ function(input, output, session) {
         div(style = "padding: 10px; background-color: #cce5ff; border-radius: 5px; margin-bottom: 15px;",
           h5("Dinucleotide Shuffling Generated Sequence:"),
           p(style = "word-break: break-all; font-family: monospace;", comp$Dinucleotide$Sequence),
-          if (!is.null(comp$Dinucleotide$Structure)) {
+          if (has_valid_structure(comp$Dinucleotide$Structure, nchar(comp$Dinucleotide$Sequence))) {
             div(
-              h5("Estimated Secondary Structure:"),
+              h5("RNAfold-predicted Secondary Structure:"),
               p(style = "word-break: break-all; font-family: monospace;", comp$Dinucleotide$Structure),
-              p(paste("Estimated MFE:", comp$Dinucleotide$MFE))
+              p(paste("RNAfold MFE:", if (has_valid_mfe(comp$Dinucleotide$MFE)) comp$Dinucleotide$MFE else "Not calculated"))
             )
+          } else {
+            p(style = "color: #856404; font-weight: bold;", "RNAfold structure and MFE: Not calculated")
           }
         )
       },
@@ -1483,12 +1555,14 @@ function(input, output, session) {
         div(style = "padding: 10px; background-color: #fff3cd; border-radius: 5px; margin-bottom: 15px;",
           h5("Random Shuffling Generated Sequence:"),
           p(style = "word-break: break-all; font-family: monospace;", comp$Random$Sequence),
-          if (!is.null(comp$Random$Structure)) {
+          if (has_valid_structure(comp$Random$Structure, nchar(comp$Random$Sequence))) {
             div(
-              h5("Estimated Secondary Structure:"),
+              h5("RNAfold-predicted Secondary Structure:"),
               p(style = "word-break: break-all; font-family: monospace;", comp$Random$Structure),
-              p(paste("Estimated MFE:", comp$Random$MFE))
+              p(paste("RNAfold MFE:", if (has_valid_mfe(comp$Random$MFE)) comp$Random$MFE else "Not calculated"))
             )
+          } else {
+            p(style = "color: #856404; font-weight: bold;", "RNAfold structure and MFE: Not calculated")
           }
         )
       }
@@ -1607,11 +1681,48 @@ function(input, output, session) {
       # Remove processing notification
       removeNotification("rnafoldAllNotif")
       
-      # Show success notification
+      count_valid_cache_results <- function(cache, sequences) {
+        if (is.null(cache) || length(cache) == 0) return(0L)
+        sum(vapply(seq_along(cache), function(i) {
+          result <- cache[[i]]
+          has_valid_structure(result$structure, nchar(sequences[i])) &&
+            has_valid_mfe(result$mfe)
+        }, logical(1)))
+      }
+
+      original_valid <- if (!is.null(values$rnafoldResults)) {
+        sum(vapply(seq_len(nrow(values$rnafoldResults)), function(i) {
+          has_valid_structure(
+            values$rnafoldResults$SecondaryStructure[i],
+            nchar(values$rnafoldResults$Sequence[i])
+          ) && has_valid_mfe(values$rnafoldResults$MFE[i])
+        }, logical(1)))
+      } else 0L
+
+      nerna_valid <- if (!is.null(values$nernaResults)) {
+        count_valid_cache_results(values$nernaStructures, values$nernaResults$NegativeSequence)
+      } else 0L
+      dinuc_valid <- if (!is.null(values$dinucleotideResults)) {
+        count_valid_cache_results(values$dinucStructures, values$dinucleotideResults$NegativeSequence)
+      } else 0L
+      random_valid <- if (!is.null(values$randomResults)) {
+        count_valid_cache_results(values$randomStructures, values$randomResults$NegativeSequence)
+      } else 0L
+
+      valid_results <- original_valid + nerna_valid + dinuc_valid + random_valid
+      failed_results <- total_sequences - valid_results
+
       showNotification(
-        sprintf("✓ Successfully calculated structures for %d sequences!", completed_sequences),
-        type = "message",
-        duration = 5
+        if (failed_results == 0) {
+          sprintf("RNAfold successfully calculated %d of %d sequences.", valid_results, total_sequences)
+        } else {
+          sprintf(
+            "RNAfold calculated %d of %d sequences; %d results are marked Not calculated.",
+            valid_results, total_sequences, failed_results
+          )
+        },
+        type = if (failed_results == 0) "message" else "warning",
+        duration = if (failed_results == 0) 5 else 10
       )
       
       # Update comparison summary with fresh data
@@ -1623,13 +1734,14 @@ function(input, output, session) {
           style = "background-color: #d4edda; border-left: 4px solid #28a745; padding: 10px; margin-top: 10px;",
           tags$p(style = "color: #155724; margin: 0;",
             icon("check-circle"),
-            tags$strong(sprintf(" Structures calculated for %d sequences", completed_sequences)),
+            tags$strong(sprintf(" Valid RNAfold results: %d of %d sequences", valid_results, total_sequences)),
             tags$br(),
             tags$small(
-              "Original: ", if(!is.null(values$rnafoldResults)) nrow(values$rnafoldResults) else 0,
-              " | NeRNA: ", if(!is.null(values$nernaStructures)) length(values$nernaStructures) else 0,
-              " | Dinucleotide: ", if(!is.null(values$dinucStructures)) length(values$dinucStructures) else 0,
-              " | Random: ", if(!is.null(values$randomStructures)) length(values$randomStructures) else 0
+              "Original: ", original_valid,
+              " | NeRNA: ", nerna_valid,
+              " | Dinucleotide: ", dinuc_valid,
+              " | Random: ", random_valid,
+              if (failed_results > 0) paste0(" | Not calculated: ", failed_results) else ""
             )
           )
         )
@@ -1677,43 +1789,45 @@ function(input, output, session) {
     req(values$selectedComparison)
     comp <- values$selectedComparison
     
-    # MFE values (real or estimated)
+    # MFE values returned by RNAfold. Missing values remain NA and are never
+    # replaced with fixed examples or estimates.
     mfe_values <- c(
-      if (!is.na(comp$Original$MFE)) comp$Original$MFE else -30.5,
-      if (!is.null(comp$NeRNA$MFE) && !is.na(comp$NeRNA$MFE)) comp$NeRNA$MFE else -18.9,
-      if (!is.null(comp$Dinucleotide$MFE) && !is.na(comp$Dinucleotide$MFE)) comp$Dinucleotide$MFE else -21.4,
-      if (!is.null(comp$Random$MFE) && !is.na(comp$Random$MFE)) comp$Random$MFE else -19.8
+      if (has_valid_mfe(comp$Original$MFE)) comp$Original$MFE else NA_real_,
+      if (has_valid_mfe(comp$NeRNA$MFE)) comp$NeRNA$MFE else NA_real_,
+      if (has_valid_mfe(comp$Dinucleotide$MFE)) comp$Dinucleotide$MFE else NA_real_,
+      if (has_valid_mfe(comp$Random$MFE)) comp$Random$MFE else NA_real_
     )
     
     # Sequence lengths
     length_values <- c(
       comp$Original$Stats$Length,
-      if (!is.null(comp$NeRNA$Stats)) comp$NeRNA$Stats$Length else comp$Original$Stats$Length,
-      if (!is.null(comp$Dinucleotide$Stats)) comp$Dinucleotide$Stats$Length else comp$Original$Stats$Length,
-      if (!is.null(comp$Random$Stats)) comp$Random$Stats$Length else comp$Original$Stats$Length
+      if (!is.null(comp$NeRNA$Stats)) comp$NeRNA$Stats$Length else NA_real_,
+      if (!is.null(comp$Dinucleotide$Stats)) comp$Dinucleotide$Stats$Length else NA_real_,
+      if (!is.null(comp$Random$Stats)) comp$Random$Stats$Length else NA_real_
     )
     
-    # Paired and unpaired bases
+    # Paired and unpaired bases are calculated only from real RNAfold
+    # dot-bracket structures. No percentage-based fallback is used.
     paired_values <- c(
-      comp$Original$Stats$PairedBases,
-      if (!is.null(comp$NeRNA$Stats)) comp$NeRNA$Stats$PairedBases else round(comp$Original$Stats$PairedBases * 0.6),
-      if (!is.null(comp$Dinucleotide$Stats)) comp$Dinucleotide$Stats$PairedBases else round(comp$Original$Stats$PairedBases * 0.7),
-      if (!is.null(comp$Random$Stats)) comp$Random$Stats$PairedBases else round(comp$Original$Stats$PairedBases * 0.65)
+      if (has_valid_structure(comp$Original$Structure, nchar(comp$Original$Sequence))) comp$Original$Stats$PairedBases else NA_real_,
+      if (!is.null(comp$NeRNA$Stats) && has_valid_structure(comp$NeRNA$Structure, nchar(comp$NeRNA$Sequence))) comp$NeRNA$Stats$PairedBases else NA_real_,
+      if (!is.null(comp$Dinucleotide$Stats) && has_valid_structure(comp$Dinucleotide$Structure, nchar(comp$Dinucleotide$Sequence))) comp$Dinucleotide$Stats$PairedBases else NA_real_,
+      if (!is.null(comp$Random$Stats) && has_valid_structure(comp$Random$Structure, nchar(comp$Random$Sequence))) comp$Random$Stats$PairedBases else NA_real_
     )
     
     unpaired_values <- c(
-      comp$Original$Stats$UnpairedBases,
-      if (!is.null(comp$NeRNA$Stats)) comp$NeRNA$Stats$UnpairedBases else comp$Original$Stats$Length - paired_values[2],
-      if (!is.null(comp$Dinucleotide$Stats)) comp$Dinucleotide$Stats$UnpairedBases else comp$Original$Stats$Length - paired_values[3],
-      if (!is.null(comp$Random$Stats)) comp$Random$Stats$UnpairedBases else comp$Original$Stats$Length - paired_values[4]
+      if (!is.na(paired_values[1])) comp$Original$Stats$UnpairedBases else NA_real_,
+      if (!is.na(paired_values[2])) comp$NeRNA$Stats$UnpairedBases else NA_real_,
+      if (!is.na(paired_values[3])) comp$Dinucleotide$Stats$UnpairedBases else NA_real_,
+      if (!is.na(paired_values[4])) comp$Random$Stats$UnpairedBases else NA_real_
     )
     
     # GC content values
     gc_values <- c(
       comp$Original$Stats$GCContent,
-      if (!is.null(comp$NeRNA$Stats)) comp$NeRNA$Stats$GCContent else comp$Original$Stats$GCContent,
-      if (!is.null(comp$Dinucleotide$Stats)) comp$Dinucleotide$Stats$GCContent else comp$Original$Stats$GCContent,
-      if (!is.null(comp$Random$Stats)) comp$Random$Stats$GCContent else comp$Original$Stats$GCContent
+      if (!is.null(comp$NeRNA$Stats)) comp$NeRNA$Stats$GCContent else NA_real_,
+      if (!is.null(comp$Dinucleotide$Stats)) comp$Dinucleotide$Stats$GCContent else NA_real_,
+      if (!is.null(comp$Random$Stats)) comp$Random$Stats$GCContent else NA_real_
     )
     
     # Calculate pairing ratio (percentage of paired bases)
@@ -1740,6 +1854,24 @@ function(input, output, session) {
   # Radar plot visualization with reduced alpha values
   output$radarVisualization <- renderPlot({
     data <- getComparisonData()
+
+    complete_methods <- !is.na(data$mfe) & !is.na(data$length) &
+      !is.na(data$paired) & !is.na(data$gc)
+
+    if (!any(complete_methods)) {
+      plot.new()
+      title("RNA Sequence Features")
+      text(0.5, 0.55, "Not calculated", cex = 1.2, font = 2)
+      text(0.5, 0.45, "Run RNAfold to obtain MFE and pairing values.", cex = 0.9)
+      return(invisible(NULL))
+    }
+
+    data$methods <- data$methods[complete_methods]
+    data$colors <- data$colors[complete_methods]
+    data$mfe <- data$mfe[complete_methods]
+    data$length <- data$length[complete_methods]
+    data$paired <- data$paired[complete_methods]
+    data$gc <- data$gc[complete_methods]
     
     # Normalize the data for radar plot
     norm_mfe <- abs(data$mfe) / max(abs(data$mfe))
@@ -1884,25 +2016,29 @@ function(input, output, session) {
   # MFE visualization
   output$mfeVisualization <- renderPlot({
     data <- getComparisonData()
+
+    available <- !is.na(data$mfe)
+    plot_values <- ifelse(available, abs(data$mfe), 0)
+    y_max <- if (any(available)) max(plot_values[available]) * 1.25 else 1
+    if (!is.finite(y_max) || y_max <= 0) y_max <- 1
     
     par(mar = c(6, 4, 4, 2) + 0.1)
     bp <- barplot(
-      abs(data$mfe), 
+      plot_values,
       names.arg = data$methods,
-      col = data$colors,
+      col = ifelse(available, data$colors, "gray85"),
       main = "Minimum Free Energy (MFE)",
       ylab = "Absolute MFE Value",
       border = "white",
-      ylim = c(0, max(abs(data$mfe)) * 1.2),
+      ylim = c(0, y_max),
       las = 2
     )
     
-    # Add MFE values on top of bars
     text(
       bp,
-      abs(data$mfe) + max(abs(data$mfe)) * 0.05,
-      labels = paste0(data$mfe),
-      cex = 0.9
+      ifelse(available, plot_values + y_max * 0.04, y_max * 0.05),
+      labels = ifelse(available, format(data$mfe, trim = TRUE), "Not calculated"),
+      cex = 0.85
     )
     
     # Add grid lines
@@ -1940,10 +2076,19 @@ function(input, output, session) {
   # Base pairing visualization
   output$pairingVisualization <- renderPlot({
     data <- getComparisonData()
+
+    available <- !is.na(data$paired) & !is.na(data$unpaired)
     
     # Create stacked bar data
-    stacked_data <- rbind(data$paired, data$unpaired)
+    stacked_data <- rbind(
+      ifelse(available, data$paired, 0),
+      ifelse(available, data$unpaired, 0)
+    )
     rownames(stacked_data) <- c("Paired", "Unpaired")
+
+    totals <- colSums(stacked_data)
+    y_max <- if (any(available)) max(totals[available]) * 1.2 else 1
+    if (!is.finite(y_max) || y_max <= 0) y_max <- 1
     
     par(mar = c(6, 4, 4, 8) + 0.1)
     bp <- barplot(
@@ -1953,7 +2098,7 @@ function(input, output, session) {
       main = "Base Pairing Distribution",
       ylab = "Number of Bases",
       border = "white",
-      ylim = c(0, max(colSums(stacked_data)) * 1.2),
+      ylim = c(0, y_max),
       las = 2,
       legend.text = rownames(stacked_data),
       args.legend = list(
@@ -1966,12 +2111,16 @@ function(input, output, session) {
     )
     
     # Add percentage labels for paired bases
-    paired_percent <- round(data$paired / (data$paired + data$unpaired) * 100, 1)
+    paired_percent <- ifelse(
+      available,
+      round(data$paired / (data$paired + data$unpaired) * 100, 1),
+      NA_real_
+    )
     text(
       bp,
-      data$paired / 2,
-      labels = paste0(paired_percent, "%"),
-      cex = 0.9
+      ifelse(available, pmax(data$paired / 2, y_max * 0.05), y_max * 0.05),
+      labels = ifelse(available, paste0(paired_percent, "%"), "Not calculated"),
+      cex = 0.85
     )
   })
   
@@ -2034,6 +2183,55 @@ function(input, output, session) {
       Random = numeric(length(metrics))
     )
 
+    summarize_rnafold_outputs <- function(structures, mfes, sequences) {
+      empty_summary <- list(
+        avg_mfe = NA_real_,
+        avg_paired = NA_real_,
+        avg_unpaired = NA_real_,
+        avg_pairing_ratio = NA_real_
+      )
+
+      if (is.null(structures) || is.null(mfes) ||
+          length(structures) != length(sequences) ||
+          length(mfes) != length(sequences) || length(sequences) == 0) {
+        return(empty_summary)
+      }
+
+      valid_structures <- vapply(seq_along(sequences), function(i) {
+        has_valid_structure(structures[i], nchar(sequences[i]))
+      }, logical(1))
+
+      if (!all(valid_structures)) return(empty_summary)
+
+      paired_counts <- vapply(structures, function(structure) {
+        sum(strsplit(structure, "", fixed = TRUE)[[1]] %in% c("(", ")"))
+      }, numeric(1))
+      total_lengths <- nchar(structures)
+      unpaired_counts <- total_lengths - paired_counts
+
+      list(
+        avg_mfe = if (all(vapply(mfes, has_valid_mfe, logical(1)))) round(mean(mfes), 2) else NA_real_,
+        avg_paired = round(mean(paired_counts), 1),
+        avg_unpaired = round(mean(unpaired_counts), 1),
+        avg_pairing_ratio = round(mean(paired_counts / total_lengths * 100), 1)
+      )
+    }
+
+    summarize_structure_cache <- function(cache, sequences) {
+      if (is.null(cache) || length(cache) != length(sequences)) {
+        return(summarize_rnafold_outputs(NULL, NULL, sequences))
+      }
+
+      structures <- vapply(cache, function(result) {
+        if (!is.null(result$structure) && length(result$structure) == 1) result$structure else NA_character_
+      }, character(1))
+      mfes <- vapply(cache, function(result) {
+        if (has_valid_mfe(result$mfe)) as.numeric(result$mfe) else NA_real_
+      }, numeric(1))
+
+      summarize_rnafold_outputs(structures, mfes, sequences)
+    }
+
     ## --- Original ---
     original_seqs <- values$fastaData$Sequence
     summary_df$Original[1] <- round(mean(nchar(original_seqs)), 1)
@@ -2044,14 +2242,15 @@ function(input, output, session) {
     summary_df$Original[2] <- round(mean(gc_percentages), 1)
 
     if (!is.null(values$rnafoldResults)) {
-      summary_df$Original[3] <- round(mean(values$rnafoldResults$MFE), 2)
-      structures <- values$rnafoldResults$SecondaryStructure
-      paired_counts <- sapply(structures, function(s) sum(gregexpr("\\(|\\)", s)[[1]] > 0))
-      total_lengths <- nchar(structures)
-      unpaired_counts <- total_lengths - paired_counts
-      summary_df$Original[4] <- round(mean(paired_counts), 1)
-      summary_df$Original[5] <- round(mean(unpaired_counts), 1)
-      summary_df$Original[6] <- round(mean(paired_counts / (paired_counts + unpaired_counts) * 100), 1)
+      original_structure_summary <- summarize_rnafold_outputs(
+        values$rnafoldResults$SecondaryStructure,
+        values$rnafoldResults$MFE,
+        values$rnafoldResults$Sequence
+      )
+      summary_df$Original[3] <- original_structure_summary$avg_mfe
+      summary_df$Original[4] <- original_structure_summary$avg_paired
+      summary_df$Original[5] <- original_structure_summary$avg_unpaired
+      summary_df$Original[6] <- original_structure_summary$avg_pairing_ratio
     } else {
       summary_df$Original[3:6] <- NA
     }
@@ -2071,27 +2270,11 @@ function(input, output, session) {
       summary_df$NeRNA[1] <- round(mean(nchar(nerna_seqs)), 1)
       summary_df$NeRNA[2] <- avg_gc(nerna_seqs)
 
-      # gerçek MFE (cache varsa)
-      if (!is.null(values$nernaStructures) && length(values$nernaStructures) > 0) {
-        mfes <- sapply(values$nernaStructures, function(x) if (!is.null(x$mfe) && !is.na(x$mfe)) x$mfe else NA)
-        mfes <- mfes[!is.na(mfes)]
-        summary_df$NeRNA[3] <- if (length(mfes) > 0) round(mean(mfes), 2) else NA
-      } else {
-        summary_df$NeRNA[3] <- NA
-      }
-
-      # eşleşme tahmini (orijinalin %70'i)
-      orig_paired <- summary_df$Original[4]
-      avg_len <- summary_df$NeRNA[1]
-      if (!is.na(orig_paired) && !is.na(avg_len)) {
-        estimated_paired <- orig_paired * 0.7
-        estimated_unpaired <- avg_len - estimated_paired
-        summary_df$NeRNA[4] <- round(estimated_paired, 1)
-        summary_df$NeRNA[5] <- round(estimated_unpaired, 1)
-        summary_df$NeRNA[6] <- round((estimated_paired / avg_len) * 100, 1)
-      } else {
-        summary_df$NeRNA[4:6] <- NA
-      }
+      nerna_structure_summary <- summarize_structure_cache(values$nernaStructures, nerna_seqs)
+      summary_df$NeRNA[3] <- nerna_structure_summary$avg_mfe
+      summary_df$NeRNA[4] <- nerna_structure_summary$avg_paired
+      summary_df$NeRNA[5] <- nerna_structure_summary$avg_unpaired
+      summary_df$NeRNA[6] <- nerna_structure_summary$avg_pairing_ratio
     } else {
       summary_df$NeRNA[1:6] <- NA
     }
@@ -2102,25 +2285,11 @@ function(input, output, session) {
       summary_df$Dinucleotide[1] <- round(mean(nchar(dinu_seqs)), 1)
       summary_df$Dinucleotide[2] <- avg_gc(dinu_seqs)
 
-      if (!is.null(values$dinucStructures) && length(values$dinucStructures) > 0) {
-        mfes <- sapply(values$dinucStructures, function(x) if (!is.null(x$mfe) && !is.na(x$mfe)) x$mfe else NA)
-        mfes <- mfes[!is.na(mfes)]
-        summary_df$Dinucleotide[3] <- if (length(mfes) > 0) round(mean(mfes), 2) else NA
-      } else {
-        summary_df$Dinucleotide[3] <- NA
-      }
-
-      orig_paired <- summary_df$Original[4]
-      avg_len <- summary_df$Dinucleotide[1]
-      if (!is.na(orig_paired) && !is.na(avg_len)) {
-        estimated_paired <- orig_paired * 0.8
-        estimated_unpaired <- avg_len - estimated_paired
-        summary_df$Dinucleotide[4] <- round(estimated_paired, 1)
-        summary_df$Dinucleotide[5] <- round(estimated_unpaired, 1)
-        summary_df$Dinucleotide[6] <- round((estimated_paired / avg_len) * 100, 1)
-      } else {
-        summary_df$Dinucleotide[4:6] <- NA
-      }
+      dinuc_structure_summary <- summarize_structure_cache(values$dinucStructures, dinu_seqs)
+      summary_df$Dinucleotide[3] <- dinuc_structure_summary$avg_mfe
+      summary_df$Dinucleotide[4] <- dinuc_structure_summary$avg_paired
+      summary_df$Dinucleotide[5] <- dinuc_structure_summary$avg_unpaired
+      summary_df$Dinucleotide[6] <- dinuc_structure_summary$avg_pairing_ratio
     } else {
       summary_df$Dinucleotide[1:6] <- NA
     }
@@ -2131,25 +2300,11 @@ function(input, output, session) {
       summary_df$Random[1] <- round(mean(nchar(random_seqs)), 1)
       summary_df$Random[2] <- avg_gc(random_seqs)
 
-      if (!is.null(values$randomStructures) && length(values$randomStructures) > 0) {
-        mfes <- sapply(values$randomStructures, function(x) if (!is.null(x$mfe) && !is.na(x$mfe)) x$mfe else NA)
-        mfes <- mfes[!is.na(mfes)]
-        summary_df$Random[3] <- if (length(mfes) > 0) round(mean(mfes), 2) else NA
-      } else {
-        summary_df$Random[3] <- NA
-      }
-
-      orig_paired <- summary_df$Original[4]
-      avg_len <- summary_df$Random[1]
-      if (!is.na(orig_paired) && !is.na(avg_len)) {
-        estimated_paired <- orig_paired * 0.6
-        estimated_unpaired <- avg_len - estimated_paired
-        summary_df$Random[4] <- round(estimated_paired, 1)
-        summary_df$Random[5] <- round(estimated_unpaired, 1)
-        summary_df$Random[6] <- round((estimated_paired / avg_len) * 100, 1)
-      } else {
-        summary_df$Random[4:6] <- NA
-      }
+      random_structure_summary <- summarize_structure_cache(values$randomStructures, random_seqs)
+      summary_df$Random[3] <- random_structure_summary$avg_mfe
+      summary_df$Random[4] <- random_structure_summary$avg_paired
+      summary_df$Random[5] <- random_structure_summary$avg_unpaired
+      summary_df$Random[6] <- random_structure_summary$avg_pairing_ratio
     } else {
       summary_df$Random[1:6] <- NA
     }
@@ -2368,8 +2523,12 @@ function(input, output, session) {
       seq <- values$rnafoldResults$Sequence[idx[1]]
       struct <- values$rnafoldResults$SecondaryStructure[idx[1]]
       mfe <- values$rnafoldResults$MFE[idx[1]]
-      
-      render_structure_text(seq, struct, mfe)
+
+      if (has_valid_structure(struct, nchar(seq))) {
+        render_structure_text(seq, struct, if (has_valid_mfe(mfe)) mfe else NULL)
+      } else {
+        "RNAfold structure and MFE: Not calculated"
+      }
     } else {
       "No structure available for selected sequence."
     }
@@ -2387,8 +2546,12 @@ function(input, output, session) {
       seq <- values$rnafoldResults$Sequence[idx[1]]
       struct <- values$rnafoldResults$SecondaryStructure[idx[1]]
       mfe <- values$rnafoldResults$MFE[idx[1]]
-      
-      create_3d_structure_plot(seq, struct, mfe)
+
+      if (has_valid_structure(struct, nchar(seq))) {
+        create_3d_structure_plot(seq, struct, if (has_valid_mfe(mfe)) mfe else NULL)
+      } else {
+        NULL
+      }
     } else {
       NULL
     }
@@ -2411,9 +2574,12 @@ function(input, output, session) {
       seq <- values$rnafoldResults$Sequence[idx[1]]
       struct <- values$rnafoldResults$SecondaryStructure[idx[1]]
       mfe <- values$rnafoldResults$MFE[idx[1]]
-      
-      # Cache the plot to avoid recalculation
-      create_3d_structure_plot(seq, struct, mfe)
+
+      if (has_valid_structure(struct, nchar(seq))) {
+        create_3d_structure_plot(seq, struct, if (has_valid_mfe(mfe)) mfe else NULL)
+      } else {
+        plotly_empty()
+      }
     } else {
       plotly_empty()
     }
@@ -2427,14 +2593,20 @@ function(input, output, session) {
     idx <- which(values$rnafoldResults$Accession == input$comparisonSequence)
     
     if (length(idx) > 0) {
+      seq <- values$rnafoldResults$Sequence[idx[1]]
       struct <- values$rnafoldResults$SecondaryStructure[idx[1]]
       mfe <- values$rnafoldResults$MFE[idx[1]]
-      paired <- sum(strsplit(struct, "")[[1]] %in% c("(", ")"))
-      total <- nchar(struct)
-      
-      paste0("Structure: ", struct, "\n",
-             "MFE: ", mfe, " kcal/mol\n",
-             "Paired: ", paired, "/", total, " (", round(paired/total*100, 1), "%)")
+
+      if (has_valid_structure(struct, nchar(seq))) {
+        paired <- sum(strsplit(struct, "", fixed = TRUE)[[1]] %in% c("(", ")"))
+        total <- nchar(struct)
+
+        paste0("Structure: ", struct, "\n",
+               "MFE: ", if (has_valid_mfe(mfe)) paste(mfe, "kcal/mol") else "Not calculated", "\n",
+               "Paired: ", paired, "/", total, " (", round(paired/total*100, 1), "%)")
+      } else {
+        "RNAfold structure and MFE: Not calculated"
+      }
     } else {
       "No structure data available"
     }
@@ -2446,7 +2618,8 @@ function(input, output, session) {
     req(values$selectedComparison)
     
     comp <- values$selectedComparison
-    if (!is.null(comp$NeRNA$Sequence)) {
+    if (!is.null(comp$NeRNA$Sequence) &&
+        has_valid_structure(comp$NeRNA$Structure, nchar(comp$NeRNA$Sequence))) {
       create_3d_structure_plot(comp$NeRNA$Sequence, comp$NeRNA$Structure, comp$NeRNA$MFE)
     } else {
       NULL
@@ -2458,17 +2631,19 @@ function(input, output, session) {
     req(values$selectedComparison)
     
     comp <- values$selectedComparison
-    if (!is.null(comp$NeRNA$Sequence)) {
+    if (is.null(comp$NeRNA$Sequence)) {
+      "NeRNA sequence not generated yet"
+    } else if (has_valid_structure(comp$NeRNA$Structure, nchar(comp$NeRNA$Sequence))) {
       structure <- comp$NeRNA$Structure
       mfe <- comp$NeRNA$MFE
       paired <- sum(strsplit(structure, "")[[1]] %in% c("(", ")"))
       total <- nchar(structure)
       
       paste0("Structure: ", structure, "\n",
-             "MFE: ", mfe, " kcal/mol\n",
+             "MFE: ", if (has_valid_mfe(mfe)) paste(mfe, "kcal/mol") else "Not calculated", "\n",
              "Paired: ", paired, "/", total, " (", round(paired/total*100, 1), "%)")
     } else {
-      "NeRNA sequence not generated yet"
+      "RNAfold structure and MFE: Not calculated"
     }
   })
   
@@ -2478,7 +2653,8 @@ function(input, output, session) {
     req(values$selectedComparison)
     
     comp <- values$selectedComparison
-    if (!is.null(comp$Dinucleotide$Sequence)) {
+    if (!is.null(comp$Dinucleotide$Sequence) &&
+        has_valid_structure(comp$Dinucleotide$Structure, nchar(comp$Dinucleotide$Sequence))) {
       create_3d_structure_plot(comp$Dinucleotide$Sequence, comp$Dinucleotide$Structure, comp$Dinucleotide$MFE)
     } else {
       NULL
@@ -2490,17 +2666,19 @@ function(input, output, session) {
     req(values$selectedComparison)
     
     comp <- values$selectedComparison
-    if (!is.null(comp$Dinucleotide$Sequence)) {
+    if (is.null(comp$Dinucleotide$Sequence)) {
+      "Dinucleotide sequence not generated yet"
+    } else if (has_valid_structure(comp$Dinucleotide$Structure, nchar(comp$Dinucleotide$Sequence))) {
       structure <- comp$Dinucleotide$Structure
       mfe <- comp$Dinucleotide$MFE
       paired <- sum(strsplit(structure, "")[[1]] %in% c("(", ")"))
       total <- nchar(structure)
       
       paste0("Structure: ", structure, "\n",
-             "MFE: ", mfe, " kcal/mol\n",
+             "MFE: ", if (has_valid_mfe(mfe)) paste(mfe, "kcal/mol") else "Not calculated", "\n",
              "Paired: ", paired, "/", total, " (", round(paired/total*100, 1), "%)")
     } else {
-      "Dinucleotide sequence not generated yet"
+      "RNAfold structure and MFE: Not calculated"
     }
   })
   
@@ -2510,7 +2688,8 @@ function(input, output, session) {
     req(values$selectedComparison)
     
     comp <- values$selectedComparison
-    if (!is.null(comp$Random$Sequence)) {
+    if (!is.null(comp$Random$Sequence) &&
+        has_valid_structure(comp$Random$Structure, nchar(comp$Random$Sequence))) {
       create_3d_structure_plot(comp$Random$Sequence, comp$Random$Structure, comp$Random$MFE)
     } else {
       NULL
@@ -2522,17 +2701,19 @@ function(input, output, session) {
     req(values$selectedComparison)
     
     comp <- values$selectedComparison
-    if (!is.null(comp$Random$Sequence)) {
+    if (is.null(comp$Random$Sequence)) {
+      "Random sequence not generated yet"
+    } else if (has_valid_structure(comp$Random$Structure, nchar(comp$Random$Sequence))) {
       structure <- comp$Random$Structure
       mfe <- comp$Random$MFE
       paired <- sum(strsplit(structure, "")[[1]] %in% c("(", ")"))
       total <- nchar(structure)
       
       paste0("Structure: ", structure, "\n",
-             "MFE: ", mfe, " kcal/mol\n",
+             "MFE: ", if (has_valid_mfe(mfe)) paste(mfe, "kcal/mol") else "Not calculated", "\n",
              "Paired: ", paired, "/", total, " (", round(paired/total*100, 1), "%)")
     } else {
-      "Random sequence not generated yet"
+      "RNAfold structure and MFE: Not calculated"
     }
   })
   
@@ -2543,72 +2724,42 @@ function(input, output, session) {
     
     comp <- values$selectedComparison
     
-    # Get original structure
-    orig_struct <- comp$Original$Structure
-    orig_mfe <- comp$Original$MFE
-    orig_paired <- sum(strsplit(orig_struct, "")[[1]] %in% c("(", ")"))
-    orig_total <- nchar(orig_struct)
-    
-    # Initialize table
-    comparison_data <- data.frame(
-      Method = "Original",
-      MFE = orig_mfe,
-      Paired_Bases = orig_paired,
-      Unpaired_Bases = orig_total - orig_paired,
-      Paired_Percent = round(orig_paired / orig_total * 100, 1),
-      stringsAsFactors = FALSE
-    )
-    
-    # Add NeRNA
-    if (!is.null(comp$NeRNA$Sequence)) {
-      nerna_struct <- comp$NeRNA$Structure
-      nerna_mfe <- comp$NeRNA$MFE
-      nerna_paired <- sum(strsplit(nerna_struct, "")[[1]] %in% c("(", ")"))
-      nerna_total <- nchar(nerna_struct)
-      
-      comparison_data <- rbind(comparison_data, data.frame(
-        Method = "NeRNA",
-        MFE = nerna_mfe,
-        Paired_Bases = nerna_paired,
-        Unpaired_Bases = nerna_total - nerna_paired,
-        Paired_Percent = round(nerna_paired / nerna_total * 100, 1),
+    make_structure_row <- function(method, item) {
+      sequence_available <- !is.null(item$Sequence)
+      structure_available <- sequence_available &&
+        has_valid_structure(item$Structure, nchar(item$Sequence))
+
+      if (!structure_available) {
+        return(data.frame(
+          Method = method,
+          MFE = NA_real_,
+          Paired_Bases = NA_real_,
+          Unpaired_Bases = NA_real_,
+          Paired_Percent = NA_real_,
+          RNAfold_Status = if (sequence_available) "Not calculated" else "Sequence not generated",
+          stringsAsFactors = FALSE
+        ))
+      }
+
+      paired <- sum(strsplit(item$Structure, "", fixed = TRUE)[[1]] %in% c("(", ")"))
+      total <- nchar(item$Structure)
+      data.frame(
+        Method = method,
+        MFE = if (has_valid_mfe(item$MFE)) item$MFE else NA_real_,
+        Paired_Bases = paired,
+        Unpaired_Bases = total - paired,
+        Paired_Percent = round(paired / total * 100, 1),
+        RNAfold_Status = if (has_valid_mfe(item$MFE)) "Calculated" else "Structure calculated; MFE unavailable",
         stringsAsFactors = FALSE
-      ))
+      )
     }
-    
-    # Add Dinucleotide
-    if (!is.null(comp$Dinucleotide$Sequence)) {
-      dinu_struct <- comp$Dinucleotide$Structure
-      dinu_mfe <- comp$Dinucleotide$MFE
-      dinu_paired <- sum(strsplit(dinu_struct, "")[[1]] %in% c("(", ")"))
-      dinu_total <- nchar(dinu_struct)
-      
-      comparison_data <- rbind(comparison_data, data.frame(
-        Method = "Dinucleotide",
-        MFE = dinu_mfe,
-        Paired_Bases = dinu_paired,
-        Unpaired_Bases = dinu_total - dinu_paired,
-        Paired_Percent = round(dinu_paired / dinu_total * 100, 1),
-        stringsAsFactors = FALSE
-      ))
-    }
-    
-    # Add Random
-    if (!is.null(comp$Random$Sequence)) {
-      random_struct <- comp$Random$Structure
-      random_mfe <- comp$Random$MFE
-      random_paired <- sum(strsplit(random_struct, "")[[1]] %in% c("(", ")"))
-      random_total <- nchar(random_struct)
-      
-      comparison_data <- rbind(comparison_data, data.frame(
-        Method = "Random",
-        MFE = random_mfe,
-        Paired_Bases = random_paired,
-        Unpaired_Bases = random_total - random_paired,
-        Paired_Percent = round(random_paired / random_total * 100, 1),
-        stringsAsFactors = FALSE
-      ))
-    }
+
+    comparison_data <- do.call(rbind, list(
+      make_structure_row("Original", comp$Original),
+      make_structure_row("NeRNA", comp$NeRNA),
+      make_structure_row("Dinucleotide", comp$Dinucleotide),
+      make_structure_row("Random", comp$Random)
+    ))
     
     return(comparison_data)
   }, striped = TRUE, hover = TRUE, bordered = TRUE, spacing = 's')
@@ -2850,7 +3001,7 @@ function(input, output, session) {
   # ============================================================
   
   # Download NeRNA FASTA sequences
-  output$downloadNeRNAFASTA <- downloadHandler(
+  output$downloadComparisonNeRNAFASTA <- downloadHandler(
     filename = function() {
       paste0("NeRNA_sequences_", format(Sys.time(), "%Y%m%d_%H%M%S"), ".fasta")
     },
@@ -2892,7 +3043,7 @@ function(input, output, session) {
   )
   
   # Download Random FASTA sequences
-  output$downloadRandomFASTA <- downloadHandler(
+  output$downloadComparisonRandomFASTA <- downloadHandler(
     filename = function() {
       paste0("Random_sequences_", format(Sys.time(), "%Y%m%d_%H%M%S"), ".fasta")
     },
@@ -3070,9 +3221,7 @@ function(input, output, session) {
                 return(list(
                   sequence_identity = if(!is.na(values$nernaResults$SequenceIdentity[idx[1]])) values$nernaResults$SequenceIdentity[idx[1]] else NA,
                   dinucleotide_similarity = if(!is.na(values$nernaResults$DinucleotideSimilarity[idx[1]])) values$nernaResults$DinucleotideSimilarity[idx[1]] else NA,
-                  gc_similarity = if(!is.na(values$nernaResults$GCSimilarity[idx[1]])) values$nernaResults$GCSimilarity[idx[1]] else NA,
-                  motif_preservation = if(!is.na(values$nernaResults$MotifPreservation[idx[1]])) values$nernaResults$MotifPreservation[idx[1]] else NA,
-                  overall_similarity = if(!is.na(values$nernaResults$OverallSimilarity[idx[1]])) values$nernaResults$OverallSimilarity[idx[1]] else NA
+                  gc_similarity = if(!is.na(values$nernaResults$GCSimilarity[idx[1]])) values$nernaResults$GCSimilarity[idx[1]] else NA
                 ))
               }
             } else if (method_name == "Dinucleotide" && !is.null(values$dinucleotideResults) && is.data.frame(values$dinucleotideResults) && nrow(values$dinucleotideResults) > 0) {
@@ -3081,9 +3230,7 @@ function(input, output, session) {
                 return(list(
                   sequence_identity = if(!is.na(values$dinucleotideResults$SequenceIdentity[idx[1]])) values$dinucleotideResults$SequenceIdentity[idx[1]] else NA,
                   dinucleotide_similarity = if(!is.na(values$dinucleotideResults$DinucleotideSimilarity[idx[1]])) values$dinucleotideResults$DinucleotideSimilarity[idx[1]] else NA,
-                  gc_similarity = if(!is.na(values$dinucleotideResults$GCSimilarity[idx[1]])) values$dinucleotideResults$GCSimilarity[idx[1]] else NA,
-                  motif_preservation = if(!is.na(values$dinucleotideResults$MotifPreservation[idx[1]])) values$dinucleotideResults$MotifPreservation[idx[1]] else NA,
-                  overall_similarity = if(!is.na(values$dinucleotideResults$OverallSimilarity[idx[1]])) values$dinucleotideResults$OverallSimilarity[idx[1]] else NA
+                  gc_similarity = if(!is.na(values$dinucleotideResults$GCSimilarity[idx[1]])) values$dinucleotideResults$GCSimilarity[idx[1]] else NA
                 ))
               }
             } else if (method_name == "Random" && !is.null(values$randomResults) && is.data.frame(values$randomResults) && nrow(values$randomResults) > 0) {
@@ -3092,9 +3239,7 @@ function(input, output, session) {
                 return(list(
                   sequence_identity = if(!is.na(values$randomResults$SequenceIdentity[idx[1]])) values$randomResults$SequenceIdentity[idx[1]] else NA,
                   dinucleotide_similarity = if(!is.na(values$randomResults$DinucleotideSimilarity[idx[1]])) values$randomResults$DinucleotideSimilarity[idx[1]] else NA,
-                  gc_similarity = if(!is.na(values$randomResults$GCSimilarity[idx[1]])) values$randomResults$GCSimilarity[idx[1]] else NA,
-                  motif_preservation = if(!is.na(values$randomResults$MotifPreservation[idx[1]])) values$randomResults$MotifPreservation[idx[1]] else NA,
-                  overall_similarity = if(!is.na(values$randomResults$OverallSimilarity[idx[1]])) values$randomResults$OverallSimilarity[idx[1]] else NA
+                  gc_similarity = if(!is.na(values$randomResults$GCSimilarity[idx[1]])) values$randomResults$GCSimilarity[idx[1]] else NA
                 ))
               }
             }
@@ -3106,9 +3251,7 @@ function(input, output, session) {
           return(list(
             sequence_identity = NA,
             dinucleotide_similarity = NA,
-            gc_similarity = NA,
-            motif_preservation = NA,
-            overall_similarity = NA
+            gc_similarity = NA
           ))
         }
         
@@ -3118,27 +3261,21 @@ function(input, output, session) {
         random_sim <- get_similarity_metrics("Random", selected_acc)
         
         sim_metrics <- data.frame(
-          Metric = c("Sequence Identity", "Dinucleotide Similarity", "GC Similarity", "Motif Preservation", "Overall Similarity"),
+          Metric = c("Sequence Identity", "Dinucleotide Similarity", "GC Similarity"),
           NeRNA = c(
             nerna_sim$sequence_identity,
             nerna_sim$dinucleotide_similarity,
-            nerna_sim$gc_similarity,
-            nerna_sim$motif_preservation,
-            nerna_sim$overall_similarity
+            nerna_sim$gc_similarity
           ),
           Dinucleotide = c(
             dinuc_sim$sequence_identity,
             dinuc_sim$dinucleotide_similarity,
-            dinuc_sim$gc_similarity,
-            dinuc_sim$motif_preservation,
-            dinuc_sim$overall_similarity
+            dinuc_sim$gc_similarity
           ),
           Random = c(
             random_sim$sequence_identity,
             random_sim$dinucleotide_similarity,
-            random_sim$gc_similarity,
-            random_sim$motif_preservation,
-            random_sim$overall_similarity
+            random_sim$gc_similarity
           ),
           stringsAsFactors = FALSE
         )
@@ -3147,21 +3284,22 @@ function(input, output, session) {
         # Sheet 4: Structure Analysis
         addWorksheet(wb, "Structure Analysis")
         # Helper function to calculate structure stats
-        calc_structure_stats <- function(structure) {
-          if (is.null(structure) || structure == "N/A") {
-            return(list(paired = 0, unpaired = 0, percentage = 0))
+        calc_structure_stats <- function(structure, sequence) {
+          if (is.null(sequence) || !has_valid_structure(structure, nchar(sequence))) {
+            return(list(paired = NA_real_, unpaired = NA_real_, percentage = NA_real_))
           }
-          paired <- sum(strsplit(structure, "")[[1]] %in% c("(", ")"))
-          unpaired <- sum(strsplit(structure, "")[[1]] == ".")
+          structure_chars <- strsplit(structure, "", fixed = TRUE)[[1]]
+          paired <- sum(structure_chars %in% c("(", ")"))
+          unpaired <- sum(structure_chars == ".")
           total <- nchar(structure)
-          percentage <- if (total > 0) round(paired / total * 100, 2) else 0
+          percentage <- round(paired / total * 100, 2)
           return(list(paired = paired, unpaired = unpaired, percentage = percentage))
         }
         
-        orig_stats <- calc_structure_stats(orig_structure)
-        nerna_stats <- calc_structure_stats(comp_data$NeRNA$Structure)
-        dinuc_stats <- calc_structure_stats(comp_data$Dinucleotide$Structure)
-        random_stats <- calc_structure_stats(comp_data$Random$Structure)
+        orig_stats <- calc_structure_stats(orig_structure, orig_seq)
+        nerna_stats <- calc_structure_stats(comp_data$NeRNA$Structure, comp_data$NeRNA$Sequence)
+        dinuc_stats <- calc_structure_stats(comp_data$Dinucleotide$Structure, comp_data$Dinucleotide$Sequence)
+        random_stats <- calc_structure_stats(comp_data$Random$Structure, comp_data$Random$Sequence)
         
         structure_analysis <- data.frame(
           Method = c("Original", "NeRNA", "Dinucleotide", "Random"),
@@ -3250,4 +3388,3 @@ function(input, output, session) {
   )
 
 }
-

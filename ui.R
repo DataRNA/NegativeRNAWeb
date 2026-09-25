@@ -35,7 +35,7 @@ dashboardPage(
                 tags$li(tags$strong("Multiple Negative Generation Methods:"), 
                        " NeRNA offers three different ways to generate negative RNA sequences:"),
                 tags$ul(
-                  tags$li(tags$strong("NeRNA Method:"), " A novel approach that shifts the sequence by a specified amount, preserving many structural features while providing effective negative sequences."),
+                  tags$li(tags$strong("NeRNA Method:"), " Uses RNAfold output to guide an octal transformation and circular bit shift."),
                   tags$li(tags$strong("Dinucleotide Shuffling:"), " Preserves dinucleotide frequencies, suitable for studies where composition is important."),
                   tags$li(tags$strong("Random Shuffling:"), " Basic randomization method that completely disrupts the sequence order.")
                 ),
@@ -56,6 +56,30 @@ dashboardPage(
               
               tags$h4("Citation:"),
               tags$p("If you use NeRNA in your research, please cite: [Citation information]"),
+
+              tags$div(
+                style = "margin-top: 20px; padding: 15px; background-color: #eef8f0; border-left: 4px solid #28a745;",
+                tags$h4(style = "margin-top: 0;", icon("vial"), " Try Example Data"),
+                tags$p("Choose an RNA class and load 10 bundled sequences without uploading a file."),
+                selectInput(
+                  "homeExampleType",
+                  "Example RNA type:",
+                  choices = list(
+                    "miRNA" = "mirna",
+                    "circRNA" = "circrna",
+                    "lncRNA" = "lncrna",
+                    "tRNA" = "trna"
+                  ),
+                  selected = "mirna",
+                  width = "220px"
+                ),
+                actionButton(
+                  "loadHomeExampleBtn",
+                  "Load Example Data",
+                  class = "btn-success",
+                  icon = icon("play")
+                )
+              ),
               
               tags$div(
                 style = "margin-top: 20px; text-align: center;",
@@ -64,7 +88,7 @@ dashboardPage(
                             style = "margin-right: 10px;"),
                 actionButton("githubBtn", "View on GitHub", 
                             class = "btn-lg btn-info", 
-                            onclick = "window.open('https://github.com/yourusername/nerna', '_blank')")
+                            onclick = "window.open('https://github.com/DataRNA/NegativeRNAWeb', '_blank')")
               )
             )
           )
@@ -152,6 +176,17 @@ dashboardPage(
                         selected = "mirna"),
             actionButton("loadBtn", "Load Sequences", 
                         class = "btn-primary"),
+            actionButton(
+              "loadExampleBtn",
+              "Load Example Data (10 sequences)",
+              class = "btn-success",
+              icon = icon("vial"),
+              style = "margin-left: 8px;"
+            ),
+            tags$p(
+              style = "margin-top: 8px; color: #666;",
+              "Loads 10 bundled examples for the selected RNA type. Example data are available for miRNA, circRNA, lncRNA, and tRNA."
+            ),
             tags$div(
               style = "margin-top: 15px;",
               conditionalPanel(
@@ -847,7 +882,7 @@ dashboardPage(
                     tags$p("Download generated sequences in FASTA format for each method."),
                     fluidRow(
                       column(width = 3,
-                        downloadButton("downloadNeRNAFASTA", "NeRNA Sequences", 
+                        downloadButton("downloadComparisonNeRNAFASTA", "NeRNA Sequences", 
                                     class = "btn-info", icon = icon("download"), 
                                     style = "width: 100%; margin-bottom: 10px;")
                       ),
@@ -857,7 +892,7 @@ dashboardPage(
                                     style = "width: 100%; margin-bottom: 10px;")
                       ),
                       column(width = 3,
-                        downloadButton("downloadRandomFASTA", "Random Sequences", 
+                        downloadButton("downloadComparisonRandomFASTA", "Random Sequences", 
                                     class = "btn-info", icon = icon("download"), 
                                     style = "width: 100%; margin-bottom: 10px;")
                       ),

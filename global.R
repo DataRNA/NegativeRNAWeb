@@ -741,7 +741,86 @@ runRNAfold_parallel <- function(fastaFile, rnaType = "mirna") {
   })
 }
 
-# NeRNA Method - Correct Implementation with Structural Transformation and Octal Shifting
+# Encode sequence and RNAfold pairing state, rotate the bit string, and decode.
+# This top-level implementation is shared by sequential and parallel workers.
+rna_octal_rotate_once <- function(sequence, structure, k) {
+  octal_to_base <- c(
+    "000" = "A", "001" = "G", "010" = "C", "100" = "U",
+    "011" = "A", "110" = "G", "101" = "C", "111" = "U"
+  )
+  paired_map <- c(A = "000", G = "001", C = "010", U = "100")
+  unpaired_map <- c(A = "011", G = "110", C = "101", U = "111")
+
+  if (is.null(sequence) || length(sequence) != 1 || is.na(sequence) || !nzchar(sequence)) {
+    stop("A non-empty RNA sequence is required.")
+  }
+  if (is.null(structure) || length(structure) != 1 || is.na(structure) || !nzchar(structure)) {
+    stop("A valid RNAfold dot-bracket structure is required.")
+  }
+
+  clean_sequence <- chartr("T", "U", toupper(gsub("\\s+", "", sequence)))
+  clean_structure <- gsub("\\s+", "", structure)
+
+  if (!grepl("^[ACGU]+$", clean_sequence)) {
+    stop("Sequence must contain only A, C, G, U (or T).")
+  }
+  if (!grepl("^[().]+$", clean_structure)) {
+    stop("RNAfold structure must contain only '.', '(' and ')'.")
+  }
+  structure_chars <- strsplit(clean_structure, "", fixed = TRUE)[[1]]
+  balance <- cumsum(ifelse(structure_chars == "(", 1L, ifelse(structure_chars == ")", -1L, 0L)))
+  if (any(balance < 0L) || tail(balance, 1) != 0L) {
+    stop("RNAfold dot-bracket structure contains unbalanced parentheses.")
+  }
+  if (nchar(clean_sequence) != nchar(clean_structure)) {
+    stop(sprintf(
+      "Sequence and structure lengths differ: sequence=%d, structure=%d",
+      nchar(clean_sequence), nchar(clean_structure)
+    ))
+  }
+
+  sequence_length <- nchar(clean_sequence)
+  if (length(k) != 1 || is.na(suppressWarnings(as.integer(k)))) {
+    stop("k must be one integer value.")
+  }
+  k <- as.integer(k)
+  if (k < 1L || k > sequence_length) {
+    stop(sprintf("k must be between 1 and sequence length (%d).", sequence_length))
+  }
+
+  bases <- strsplit(clean_sequence, "", fixed = TRUE)[[1]]
+  paired <- structure_chars %in% c("(", ")")
+  codes <- character(length(bases))
+  codes[paired] <- paired_map[bases[paired]]
+  codes[!paired] <- unpaired_map[bases[!paired]]
+  encoded_bits <- paste0(codes, collapse = "")
+
+  bit_count <- nchar(encoded_bits)
+  shift <- k %% bit_count
+  rotated_bits <- if (shift == 0L) {
+    encoded_bits
+  } else {
+    paste0(
+      substr(encoded_bits, shift + 1L, bit_count),
+      substr(encoded_bits, 1L, shift)
+    )
+  }
+
+  starts <- seq.int(1L, bit_count, by = 3L)
+  triplets <- substring(rotated_bits, starts, starts + 2L)
+  if (!all(triplets %in% names(octal_to_base))) {
+    stop("Rotated representation contains an unknown three-bit code.")
+  }
+
+  list(
+    k = k,
+    encoded_bits = encoded_bits,
+    rotated_bits = rotated_bits,
+    decoded_sequence = paste0(unname(octal_to_base[triplets]), collapse = "")
+  )
+}
+
+# NeRNA Method - structural transformation and circular bit shifting
 generateNeRNA <- function(sequences, shifting_size = 1, seed = NULL, rnafold_results = NULL, use_parallel = TRUE) {
   # Set seed if provided
   if (!is.null(seed)) {
@@ -770,24 +849,10 @@ generateNeRNA_sequential <- function(sequences, shifting_size = 1, seed = NULL, 
   
   # Generate NeRNA for a single sequence
   generate_single_nerna <- function(seq) {
-    # Step 1: Get secondary structure (use RNAfold if available, otherwise use simple pattern)
+    # Get the matching RNAfold structure.
     structure <- get_secondary_structure(seq)
-    
-    # DEBUG: Print all steps
-    cat("=== DEBUG NeRNA ===\n")
-    cat("Original:", seq, "\n")
-    cat("Structure:", structure, "\n")
-    
-    # Use the correct rna_octal_rotate_once function
+
     result <- rna_octal_rotate_once(seq, structure, shifting_size)
-    
-    cat("Encoded bits:", result$encoded_bits, "\n")
-    cat("Bit string length:", nchar(result$encoded_bits), "\n")
-    cat("Rotated bits:", result$rotated_bits, "\n")
-    cat("Result:", result$decoded_sequence, "\n")
-    cat("Result length:", nchar(result$decoded_sequence), "vs Original length:", nchar(seq), "\n")
-    cat("==================\n")
-    
     return(result$decoded_sequence)
   }
   
@@ -804,311 +869,6 @@ generateNeRNA_sequential <- function(sequences, shifting_size = 1, seed = NULL, 
     
     # If no RNAfold results available, return error
     stop("RNAfold results are required for NeRNA algorithm. Please run secondary structure analysis first.")
-  }
-  
-  # Apply structural transformation
-  apply_structural_transformation <- function(seq, structure) {
-    chars <- strsplit(seq, "")[[1]]
-    struct_chars <- strsplit(structure, "")[[1]]
-    
-    # Ensure same length
-    if (length(chars) != length(struct_chars)) {
-      return(seq)  # Return original if lengths don't match
-    }
-    
-    result <- character(length(chars))
-    
-    for (i in 1:length(chars)) {
-      if (struct_chars[i] == ".") {
-        # Unpaired base - convert to double letter (e.g., A -> Aa)
-        result[i] <- paste0(chars[i], tolower(chars[i]))
-      } else {
-        # Paired base - keep as is
-        result[i] <- chars[i]
-      }
-    }
-    
-    return(paste0(result, collapse = ""))
-  }
-  
-  # Convert nucleotide sequence to octal representation
-  convert_to_octal <- function(seq) {
-    # Parse the sequence to handle double letter bases
-    bases <- parse_sequence_with_double_letters(seq)
-    
-    octal_sequence <- character()
-    
-    for (base in bases) {
-      octal_code <- get_octal_code(base)
-      if (!is.null(octal_code)) {
-        octal_sequence <- c(octal_sequence, octal_code)
-      }
-    }
-    
-    return(paste0(octal_sequence, collapse = ""))
-  }
-  
-  # Parse sequence to correctly handle double letter bases
-  parse_sequence_with_double_letters <- function(seq) {
-    # Remove spaces
-    seq <- gsub(" ", "", seq)
-    
-    bases <- character()
-    i <- 1
-    
-    while (i <= nchar(seq)) {
-      char <- substr(seq, i, i)
-      
-      # Check if next character is lowercase (double letter base)
-      if (i < nchar(seq) && substr(seq, i + 1, i + 1) == tolower(char)) {
-        # This is a double letter base (unpaired)
-        bases <- c(bases, paste0(char, tolower(char)))
-        i <- i + 2  # Skip both characters
-      } else {
-        # Regular base (paired)
-        bases <- c(bases, char)
-        i <- i + 1
-      }
-    }
-    
-    return(bases)
-  }
-  
-  # Get octal code for a nucleotide base
-  get_octal_code <- function(base) {
-    octal_map <- list(
-      "A" = "000",    # Paired A
-      "G" = "001",    # Paired G
-      "C" = "010",    # Paired C
-      "U" = "100",    # Paired U
-      "Aa" = "011",   # Unpaired A
-      "Gg" = "110",   # Unpaired G
-      "Cc" = "101",   # Unpaired C
-      "Uu" = "111"    # Unpaired U
-    )
-    
-    return(octal_map[[base]])
-  }
-  
-  # 0/1 bit dizisini sola döndür (k bit)
-  rotate_bits_left <- function(bitstr, k = 1) {
-    s <- gsub("\\s+", "", bitstr)
-    stopifnot(grepl("^[01]+$", s))
-    n <- nchar(s)
-    if (n == 0) return(s)
-    k <- k %% n
-    if (k == 0) return(s)
-    paste0(substr(s, k + 1, n), substr(s, 1, k))
-  }
-  
-  # Sekans + dot-bracket -> 3-bit kod -> TEK SEFER rotate(k) -> bazlara çöz
-  rna_octal_rotate_once <- function(sequence, structure, k) {
-    # --- sözlükler ---
-    octal_to_base <- c("000"="A","001"="G","010"="C","100"="U",
-                       "011"="a","110"="g","101"="c","111"="u")
-    paired_map    <- c(A="000", G="001", C="010", U="100")
-    unpaired_map  <- c(A="011", G="110", C="101", U="111")
-    
-    # --- yardımcılar ---
-    clean_seq <- function(seq) {
-      s <- toupper(gsub("\\s+", "", seq))
-      chartr("T", "U", s)
-    }
-    clean_struct <- function(struct) {
-      s <- gsub("\\s+", "", struct)
-      if (grepl("[^().]", s)) stop("Structure yalnızca '.', '(' ve ')' içermeli (MFE olmamalı).")
-      s
-    }
-    encode_bits <- function(sequence, structure) {
-      seq <- clean_seq(sequence)
-      str <- clean_struct(structure)
-      if (nchar(seq) != nchar(str)) {
-        stop(sprintf("Uzunluklar farklı: sekans=%d, yapı=%d", nchar(seq), nchar(str)))
-      }
-      bases   <- strsplit(seq, "", fixed = TRUE)[[1]]
-      structc <- strsplit(str, "",  fixed = TRUE)[[1]]
-      if (!all(bases %in% c("A","C","G","U"))) {
-        bad <- unique(bases[!bases %in% c("A","C","G","U")])
-        stop(sprintf("Geçersiz baz(lar): %s", paste(bad, collapse=",")))
-      }
-      paired <- structc %in% c("(", ")")
-      codes <- character(length(bases))
-      codes[paired]  <- paired_map[bases[paired]]
-      codes[!paired] <- unpaired_map[bases[!paired]]
-      paste0(codes, collapse = "")
-    }
-    decode_bits_to_bases <- function(bitstr) {
-      n_bits <- nchar(bitstr)
-      if (n_bits %% 3 != 0) stop("Bit uzunluğu 3'ün katı olmalı.")
-      i <- seq(1, n_bits, by = 3)
-      trip <- substring(bitstr, i, i + 2)
-      if (!all(trip %in% names(octal_to_base))) {
-        bad <- unique(trip[!trip %in% names(octal_to_base)])
-        stop(sprintf("Sözlükte olmayan üçlü(ler): %s", paste(bad, collapse=",")))
-      }
-      # Convert all to uppercase
-      result <- paste0(unname(octal_to_base[trip]), collapse = "")
-      toupper(result)
-    }
-    
-    # --- k doğrulama: 1..L (L = sekans uzunluğu, baz sayısı) ---
-    L <- nchar(clean_seq(sequence))
-    if (length(k) != 1 || is.na(as.integer(k))) stop("k tek bir tam sayı olmalı.")
-    k <- as.integer(k)
-    if (k < 1L || k > L) stop(sprintf("k 1 ile sekans uzunluğu (%d) arasında olmalı.", L))
-    
-    # --- akış ---
-    bits0   <- encode_bits(sequence, structure)   # uzunluk = 3*L bit
-    bitsRot <- rotate_bits_left(bits0, k)         # k bit sola döndür
-    decSeq  <- decode_bits_to_bases(bitsRot)      # üçlüleri bazlara çöz
-    
-    list(
-      k = k,
-      encoded_bits     = bits0,
-      rotated_bits     = bitsRot,
-      decoded_sequence = decSeq
-    )
-  }
-  
-  # Apply bit-level circular shifting using the correct method
-  apply_bit_circular_shift <- function(octal_sequence, shift) {
-    # Convert octal sequence to bit string
-    bit_string <- convert_octal_to_bits(octal_sequence)
-    
-    # Apply circular shift using the correct method
-    shifted_bits <- rotate_bits_left(bit_string, shift)
-    
-    # Convert back to octal
-    shifted_octal <- convert_bits_to_octal(shifted_bits)
-    
-    return(shifted_octal)
-  }
-  
-  # Convert octal sequence to bit string
-  convert_octal_to_bits <- function(octal_sequence) {
-    # Split into 3-bit groups and convert to binary
-    n <- nchar(octal_sequence)
-    if (n == 0) return("")
-    
-    bit_string <- ""
-    
-    for (i in seq(1, n, by = 3)) {
-      octal_group <- substr(octal_sequence, i, i + 2)
-      if (nchar(octal_group) == 3) {
-        bit_group <- convert_octal_group_to_bits(octal_group)
-        bit_string <- paste0(bit_string, bit_group)
-      }
-    }
-    
-    return(bit_string)
-  }
-  
-  # Convert 3-bit octal group to binary
-  convert_octal_group_to_bits <- function(octal_group) {
-    # Convert octal to binary (3 bits)
-    decimal <- strtoi(octal_group, base = 8)
-    
-    # Convert decimal to 3-bit binary
-    if (decimal == 0) return("000")
-    if (decimal == 1) return("001")
-    if (decimal == 2) return("010")
-    if (decimal == 3) return("011")
-    if (decimal == 4) return("100")
-    if (decimal == 5) return("101")
-    if (decimal == 6) return("110")
-    if (decimal == 7) return("111")
-    
-    return("000")  # Fallback
-  }
-  
-  # Convert bit string back to octal
-  convert_bits_to_octal <- function(bit_string) {
-    n <- nchar(bit_string)
-    if (n == 0) return("")
-    
-    # Pad with zeros to make length multiple of 3
-    remainder <- n %% 3
-    if (remainder != 0) {
-      padding <- 3 - remainder
-      bit_string <- paste0(bit_string, paste(rep("0", padding), collapse = ""))
-      n <- nchar(bit_string)
-    }
-    
-    octal_sequence <- ""
-    
-    for (i in seq(1, n, by = 3)) {
-      bit_group <- substr(bit_string, i, i + 2)
-      if (nchar(bit_group) == 3) {
-        octal_group <- convert_bit_group_to_octal(bit_group)
-        octal_sequence <- paste0(octal_sequence, octal_group)
-      }
-    }
-    
-    return(octal_sequence)
-  }
-  
-  # Convert 3-bit group to octal
-  convert_bit_group_to_octal <- function(bit_group) {
-    # Convert binary to octal
-    decimal <- strtoi(bit_group, base = 2)
-    
-    # Convert decimal to octal
-    if (decimal == 0) return("000")
-    if (decimal == 1) return("001")
-    if (decimal == 2) return("010")
-    if (decimal == 3) return("011")
-    if (decimal == 4) return("100")
-    if (decimal == 5) return("101")
-    if (decimal == 6) return("110")
-    if (decimal == 7) return("111")
-    
-    return("000")  # Fallback
-  }
-  
-  # Convert octal sequence back to nucleotide sequence
-  convert_from_octal <- function(octal_sequence) {
-    # Split into 3-digit groups
-    n <- nchar(octal_sequence)
-    if (n == 0) return("")
-    
-    bases <- character()
-    
-    for (i in seq(1, n, by = 3)) {
-      octal_group <- substr(octal_sequence, i, i + 2)
-      if (nchar(octal_group) == 3) {
-        base <- get_base_from_octal(octal_group)
-        if (!is.null(base)) {
-          # Convert double letter bases back to single letter
-          # Aa -> A, Gg -> G, Cc -> C, Uu -> U
-          if (base == "Aa") clean_base <- "A"
-          else if (base == "Gg") clean_base <- "G"
-          else if (base == "Cc") clean_base <- "C"
-          else if (base == "Uu") clean_base <- "U"
-          else clean_base <- base  # Already single letter
-          
-          bases <- c(bases, clean_base)
-        }
-      }
-    }
-    
-    # Join bases without spaces
-    return(paste0(bases, collapse = ""))
-  }
-  
-  # Get nucleotide base from octal code
-  get_base_from_octal <- function(octal_code) {
-    octal_to_base <- list(
-      "000" = "A",    # Paired A
-      "001" = "G",    # Paired G
-      "010" = "C",    # Paired C
-      "100" = "U",    # Paired U
-      "011" = "Aa",   # Unpaired A
-      "110" = "Gg",   # Unpaired G
-      "101" = "Cc",   # Unpaired C
-      "111" = "Uu"    # Unpaired U
-    )
-    
-    return(octal_to_base[[octal_code]])
   }
   
   # Apply the NeRNA algorithm to all sequences
@@ -1164,73 +924,6 @@ generateNeRNA_parallel <- function(sequences, shifting_size = 1, seed = NULL, rn
   })
 }
 
-# Test function for debugging NeRNA
-test_nerna_debug <- function() {
-  # Test with simple sequence
-  test_seq <- "AUGC"
-  test_structure <- "(..)"
-  
-  cat("=== NeRNA Debug Test (New System) ===\n")
-  cat("Original sequence:", test_seq, "\n")
-  cat("Structure:", test_structure, "\n")
-  
-  # Apply structural transformation
-  transformed <- apply_structural_transformation(test_seq, test_structure)
-  cat("Transformed:", transformed, "\n")
-  
-  # Parse the transformed sequence
-  parsed_bases <- parse_sequence_with_double_letters(transformed)
-  cat("Parsed bases:", paste(parsed_bases, collapse = " "), "\n")
-  
-  # Test each base conversion
-  for (base in parsed_bases) {
-    octal_code <- get_octal_code(base)
-    cat("Base:", base, "-> Octal:", octal_code, "\n")
-  }
-  
-  # Convert to octal
-  octal_seq <- convert_to_octal(transformed)
-  cat("Octal:", octal_seq, "\n")
-  
-  # Test octal to bits conversion
-  bit_string <- convert_octal_to_bits(octal_seq)
-  cat("Bit string:", bit_string, "\n")
-  cat("Bit string length:", nchar(bit_string), "\n")
-  
-  # Test each octal group conversion
-  cat("Testing octal group conversions:\n")
-  for (i in seq(1, nchar(octal_seq), by = 3)) {
-    octal_group <- substr(octal_seq, i, i + 2)
-    if (nchar(octal_group) == 3) {
-      bit_group <- convert_octal_group_to_bits(octal_group)
-      cat("Octal group:", octal_group, "-> Bit group:", bit_group, "\n")
-    }
-  }
-  
-  # Test bit shift manually
-  n_bits <- nchar(bit_string)
-  if (n_bits > 0) {
-    # Manual shift: move first bit to end
-    shifted_bits <- paste0(substr(bit_string, 2, n_bits), substr(bit_string, 1, 1))
-    cat("Manual shifted bits:", shifted_bits, "\n")
-    cat("Shifted bits length:", nchar(shifted_bits), "\n")
-    
-    # Convert back to octal manually
-    manual_octal <- convert_bits_to_octal(shifted_bits)
-    cat("Manual shifted octal:", manual_octal, "\n")
-  }
-  
-  # Apply bit shift using function
-  shifted_octal <- apply_bit_circular_shift(octal_seq, 1)
-  cat("Function shifted octal:", shifted_octal, "\n")
-  
-  # Convert back to nucleotides
-  result <- convert_from_octal(shifted_octal)
-  cat("Result:", result, "\n")
-  
-  return(result)
-}
-
 # Calculate structural similarity between original and NeRNA sequences
 calculate_structural_similarity <- function(original_seq, nerna_seq) {
   # Calculate various similarity metrics
@@ -1244,12 +937,6 @@ calculate_structural_similarity <- function(original_seq, nerna_seq) {
   
   # 3. GC content similarity
   metrics$gc_similarity <- calculate_gc_similarity(original_seq, nerna_seq)
-  
-  # 4. Structural motif preservation
-  metrics$motif_preservation <- calculate_motif_preservation(original_seq, nerna_seq)
-  
-  # 5. Overall structural similarity score
-  metrics$overall_similarity <- calculate_overall_similarity(metrics)
   
   return(metrics)
 }
@@ -1273,12 +960,10 @@ calculate_dinucleotide_similarity <- function(seq1, seq2) {
   freq1 <- get_dinucleotide_frequencies(seq1)
   freq2 <- get_dinucleotide_frequencies(seq2)
   
-  # Calculate cosine similarity
-  common_dinucs <- intersect(names(freq1), names(freq2))
-  
-  if (length(common_dinucs) == 0) return(0)
-  
-  dot_product <- sum(freq1[common_dinucs] * freq2[common_dinucs])
+  # Calculate cosine similarity over the same 16 dinucleotide dimensions.
+  # get_dinucleotide_frequencies() returns named vectors in a fixed order,
+  # including zero-frequency dinucleotides, so values cannot be misaligned.
+  dot_product <- sum(freq1 * freq2)
   norm1 <- sqrt(sum(freq1^2))
   norm2 <- sqrt(sum(freq2^2))
   
@@ -1289,14 +974,31 @@ calculate_dinucleotide_similarity <- function(seq1, seq2) {
 
 # Get dinucleotide frequencies
 get_dinucleotide_frequencies <- function(seq) {
-    chars <- strsplit(seq, "")[[1]]
-    n <- length(chars)
-    
-  if (n < 2) return(numeric(0))
-  
+  seq <- toupper(gsub("\\s+", "", seq))
+  seq <- chartr("T", "U", seq)
+  chars <- strsplit(seq, "", fixed = TRUE)[[1]]
+  n <- length(chars)
+
+  all_dinucs <- as.vector(outer(
+    c("A", "C", "G", "U"),
+    c("A", "C", "G", "U"),
+    paste0
+  ))
+
+  if (n < 2) {
+    return(setNames(numeric(length(all_dinucs)), all_dinucs))
+  }
+
+  if (!all(chars %in% c("A", "C", "G", "U"))) {
+    stop("Dinucleotide similarity requires sequences containing only A, C, G, U (or T).")
+  }
+
   dinucs <- paste0(chars[-n], chars[-1])
-  freq_table <- table(dinucs)
-  return(as.numeric(freq_table) / length(dinucs))
+  counts <- table(factor(dinucs, levels = all_dinucs))
+  frequencies <- as.numeric(counts) / length(dinucs)
+  names(frequencies) <- all_dinucs
+
+  return(frequencies)
 }
 
 # Calculate GC content similarity
@@ -1306,37 +1008,6 @@ calculate_gc_similarity <- function(seq1, seq2) {
   
   # Return similarity as percentage (100 - difference)
   return(max(0, 100 - abs(gc1 - gc2)))
-}
-
-# Calculate structural motif preservation (simplified for NeRNA)
-calculate_motif_preservation <- function(seq1, seq2) {
-  # Simplified motif preservation calculation
-  # For NeRNA, we'll use a simple length-based similarity
-  len1 <- nchar(seq1)
-  len2 <- nchar(seq2)
-  
-  if (len1 == 0 || len2 == 0) return(0)
-  
-  # Calculate length similarity
-  length_similarity <- 100 - abs(len1 - len2) / max(len1, len2) * 100
-  
-  # For NeRNA, we assume some structural preservation due to the algorithm
-  # This is a simplified metric
-  return(max(0, length_similarity * 0.7))
-}
-
-# Calculate overall similarity score
-calculate_overall_similarity <- function(metrics) {
-  # Weighted average of all metrics
-  weights <- c(0.3, 0.25, 0.2, 0.25)  # Weights for each metric
-  scores <- c(
-    metrics$sequence_identity,
-    metrics$dinucleotide_similarity,
-    metrics$gc_similarity,
-    metrics$motif_preservation
-  )
-  
-  return(sum(weights * scores))
 }
 
 # Dinükleotit-korumalı karıştırma (Altschul & Erickson) — Euler izi ile
@@ -1600,11 +1271,18 @@ calculateGC <- function(sequence) {
 
 # Calculate paired bases from structure notation
 calculatePaired <- function(structure) {
-  if (is.null(structure)) return(list(paired = 0, unpaired = 0))
-  
-  paired_count <- sum(grepl("[\\(\\)]", strsplit(structure, "")[[1]]))
-  total_length <- nchar(structure)
-  unpaired_count <- total_length - paired_count
+  if (is.null(structure) || length(structure) != 1 || is.na(structure) ||
+      !nzchar(structure) || !grepl("^[().]+$", structure)) {
+    return(list(paired = NA_real_, unpaired = NA_real_))
+  }
+
+  structure_chars <- strsplit(structure, "", fixed = TRUE)[[1]]
+  balance <- cumsum(ifelse(structure_chars == "(", 1L, ifelse(structure_chars == ")", -1L, 0L)))
+  if (any(balance < 0L) || tail(balance, 1) != 0L) {
+    return(list(paired = NA_real_, unpaired = NA_real_))
+  }
+  paired_count <- sum(structure_chars %in% c("(", ")"))
+  unpaired_count <- sum(structure_chars == ".")
   
   return(list(paired = paired_count, unpaired = unpaired_count))
 }
@@ -1677,14 +1355,6 @@ export_comprehensive_results <- function(original_data, nerna_data = NULL, dinuc
     
     avg_gc_sim <- if (!is.null(similarity_metrics) && "GCSimilarity" %in% names(similarity_metrics)) {
       round(mean(as.numeric(similarity_metrics$GCSimilarity), na.rm = TRUE), 2)
-    } else NA
-    
-    avg_motif_pres <- if (!is.null(similarity_metrics) && "MotifPreservation" %in% names(similarity_metrics)) {
-      round(mean(as.numeric(similarity_metrics$MotifPreservation), na.rm = TRUE), 2)
-    } else NA
-    
-    avg_overall_sim <- if (!is.null(similarity_metrics) && "OverallSimilarity" %in% names(similarity_metrics)) {
-      round(mean(as.numeric(similarity_metrics$OverallSimilarity), na.rm = TRUE), 2)
     } else NA
     
     summary_stats <- data.frame(
@@ -2483,11 +2153,12 @@ quick_rnafold <- function(sequence) {
       }
     }
     
-    # Fallback
-    return(list(structure = paste(rep(".", nchar(sequence)), collapse = ""), mfe = NA))
+    # Do not fabricate an all-unpaired structure when RNAfold output cannot
+    # be parsed. Missing results must remain explicit for downstream reports.
+    return(list(structure = NA_character_, mfe = NA_real_))
   }, error = function(e) {
     message("Error running quick RNAfold: ", e$message)
-    return(list(structure = paste(rep(".", nchar(sequence)), collapse = ""), mfe = NA))
+    return(list(structure = NA_character_, mfe = NA_real_))
   })
 }
 

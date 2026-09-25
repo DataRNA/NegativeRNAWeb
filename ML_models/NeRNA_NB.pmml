@@ -1,0 +1,710 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PMML version="4.2" xmlns="http://www.dmg.org/PMML-4_2">
+  <Header copyright="DataRNA1">
+    <Application name="KNIME" version="5.12.0"/>
+  </Header>
+  <DataDictionary numberOfFields="37">
+    <DataField name="x1_1" optype="continuous" dataType="double">
+      <Interval closure="closedClosed" leftMargin="-0.18177003311463794" rightMargin="0.2189817493028102"/>
+    </DataField>
+    <DataField name="y1_1" optype="continuous" dataType="double">
+      <Interval closure="closedClosed" leftMargin="-0.17514040284094373" rightMargin="0.22767970805074125"/>
+    </DataField>
+    <DataField name="z1_1" optype="continuous" dataType="double">
+      <Interval closure="closedClosed" leftMargin="0.0" rightMargin="87.70137641020689"/>
+    </DataField>
+    <DataField name="x1_2" optype="continuous" dataType="double">
+      <Interval closure="closedClosed" leftMargin="-0.14118008292501674" rightMargin="0.28756067755082865"/>
+    </DataField>
+    <DataField name="y1_2" optype="continuous" dataType="double">
+      <Interval closure="closedClosed" leftMargin="-0.20261724503721806" rightMargin="0.23452494409400057"/>
+    </DataField>
+    <DataField name="z1_2" optype="continuous" dataType="double">
+      <Interval closure="closedClosed" leftMargin="0.0" rightMargin="239.0120476504933"/>
+    </DataField>
+    <DataField name="x1_3" optype="continuous" dataType="double">
+      <Interval closure="closedClosed" leftMargin="-0.3184963550578189" rightMargin="0.17883190015489012"/>
+    </DataField>
+    <DataField name="y1_3" optype="continuous" dataType="double">
+      <Interval closure="closedClosed" leftMargin="-0.20244689116413772" rightMargin="0.25467228683791154"/>
+    </DataField>
+    <DataField name="z1_3" optype="continuous" dataType="double">
+      <Interval closure="closedClosed" leftMargin="0.0" rightMargin="6192.50145957512"/>
+    </DataField>
+    <DataField name="x1_4" optype="continuous" dataType="double">
+      <Interval closure="closedClosed" leftMargin="-0.15638399448434687" rightMargin="0.1367960950698006"/>
+    </DataField>
+    <DataField name="y1_4" optype="continuous" dataType="double">
+      <Interval closure="closedClosed" leftMargin="-0.188560048575468" rightMargin="0.16464922634107684"/>
+    </DataField>
+    <DataField name="z1_4" optype="continuous" dataType="double">
+      <Interval closure="closedClosed" leftMargin="0.0" rightMargin="30287.428562376346"/>
+    </DataField>
+    <DataField name="x2_1" optype="continuous" dataType="double">
+      <Interval closure="closedClosed" leftMargin="-0.18940311826352693" rightMargin="0.24049052410157318"/>
+    </DataField>
+    <DataField name="y2_1" optype="continuous" dataType="double">
+      <Interval closure="closedClosed" leftMargin="-0.19442508029512584" rightMargin="0.23197879425654905"/>
+    </DataField>
+    <DataField name="z2_1" optype="continuous" dataType="double">
+      <Interval closure="closedClosed" leftMargin="0.0" rightMargin="180.76663330663956"/>
+    </DataField>
+    <DataField name="x2_2" optype="continuous" dataType="double">
+      <Interval closure="closedClosed" leftMargin="-0.23014138554314992" rightMargin="0.23488482365663182"/>
+    </DataField>
+    <DataField name="y2_2" optype="continuous" dataType="double">
+      <Interval closure="closedClosed" leftMargin="-0.2039911133393352" rightMargin="0.19679376282291577"/>
+    </DataField>
+    <DataField name="z2_2" optype="continuous" dataType="double">
+      <Interval closure="closedClosed" leftMargin="0.0" rightMargin="6496.195706065529"/>
+    </DataField>
+    <DataField name="x2_3" optype="continuous" dataType="double">
+      <Interval closure="closedClosed" leftMargin="-0.277353485134515" rightMargin="0.14346992405433978"/>
+    </DataField>
+    <DataField name="y2_3" optype="continuous" dataType="double">
+      <Interval closure="closedClosed" leftMargin="-0.21059988924998568" rightMargin="0.23942922060942967"/>
+    </DataField>
+    <DataField name="z2_3" optype="continuous" dataType="double">
+      <Interval closure="closedClosed" leftMargin="0.0" rightMargin="11510.270075947656"/>
+    </DataField>
+    <DataField name="x2_4" optype="continuous" dataType="double">
+      <Interval closure="closedClosed" leftMargin="-0.3198327767569432" rightMargin="0.16436501271784534"/>
+    </DataField>
+    <DataField name="y2_4" optype="continuous" dataType="double">
+      <Interval closure="closedClosed" leftMargin="-0.299811312365202" rightMargin="0.1946577097927514"/>
+    </DataField>
+    <DataField name="z2_4" optype="continuous" dataType="double">
+      <Interval closure="closedClosed" leftMargin="0.0" rightMargin="135.99748839202235"/>
+    </DataField>
+    <DataField name="x3_1" optype="continuous" dataType="double">
+      <Interval closure="closedClosed" leftMargin="-0.1366564228349981" rightMargin="0.29661667988335794"/>
+    </DataField>
+    <DataField name="y3_1" optype="continuous" dataType="double">
+      <Interval closure="closedClosed" leftMargin="-0.22212704797466687" rightMargin="0.252583353550448"/>
+    </DataField>
+    <DataField name="z3_1" optype="continuous" dataType="double">
+      <Interval closure="closedClosed" leftMargin="0.0" rightMargin="1160.4881963382363"/>
+    </DataField>
+    <DataField name="x3_2" optype="continuous" dataType="double">
+      <Interval closure="closedClosed" leftMargin="-0.13648459465720256" rightMargin="0.2967230951399918"/>
+    </DataField>
+    <DataField name="y3_2" optype="continuous" dataType="double">
+      <Interval closure="closedClosed" leftMargin="-0.23504749450862575" rightMargin="0.16909179514337477"/>
+    </DataField>
+    <DataField name="z3_2" optype="continuous" dataType="double">
+      <Interval closure="closedClosed" leftMargin="0.0" rightMargin="42936.27389652637"/>
+    </DataField>
+    <DataField name="x3_3" optype="continuous" dataType="double">
+      <Interval closure="closedClosed" leftMargin="-0.27794794653597976" rightMargin="0.17000602463141778"/>
+    </DataField>
+    <DataField name="y3_3" optype="continuous" dataType="double">
+      <Interval closure="closedClosed" leftMargin="-0.19826193255628086" rightMargin="0.266911760679858"/>
+    </DataField>
+    <DataField name="z3_3" optype="continuous" dataType="double">
+      <Interval closure="closedClosed" leftMargin="0.6327276392070077" rightMargin="96.59542955573869"/>
+    </DataField>
+    <DataField name="x3_4" optype="continuous" dataType="double">
+      <Interval closure="closedClosed" leftMargin="-0.28157175229882037" rightMargin="0.11881414175127063"/>
+    </DataField>
+    <DataField name="y3_4" optype="continuous" dataType="double">
+      <Interval closure="closedClosed" leftMargin="-0.22033909651784964" rightMargin="0.14902384987470638"/>
+    </DataField>
+    <DataField name="z3_4" optype="continuous" dataType="double">
+      <Interval closure="closedClosed" leftMargin="0.0" rightMargin="183.34754595730675"/>
+    </DataField>
+    <DataField name="class" optype="categorical" dataType="string">
+      <Value value="positive"/>
+      <Value value="negative"/>
+    </DataField>
+  </DataDictionary>
+  <NaiveBayesModel isScorable="true" modelName="KNIME PMML Naive Bayes model" threshold="1.0E-4" functionName="classification">
+    <MiningSchema>
+      <MiningField name="x1_1" invalidValueTreatment="asIs"/>
+      <MiningField name="y1_1" invalidValueTreatment="asIs"/>
+      <MiningField name="z1_1" invalidValueTreatment="asIs"/>
+      <MiningField name="x1_2" invalidValueTreatment="asIs"/>
+      <MiningField name="y1_2" invalidValueTreatment="asIs"/>
+      <MiningField name="z1_2" invalidValueTreatment="asIs"/>
+      <MiningField name="x1_3" invalidValueTreatment="asIs"/>
+      <MiningField name="y1_3" invalidValueTreatment="asIs"/>
+      <MiningField name="z1_3" invalidValueTreatment="asIs"/>
+      <MiningField name="x1_4" invalidValueTreatment="asIs"/>
+      <MiningField name="y1_4" invalidValueTreatment="asIs"/>
+      <MiningField name="z1_4" invalidValueTreatment="asIs"/>
+      <MiningField name="x2_1" invalidValueTreatment="asIs"/>
+      <MiningField name="y2_1" invalidValueTreatment="asIs"/>
+      <MiningField name="z2_1" invalidValueTreatment="asIs"/>
+      <MiningField name="x2_2" invalidValueTreatment="asIs"/>
+      <MiningField name="y2_2" invalidValueTreatment="asIs"/>
+      <MiningField name="z2_2" invalidValueTreatment="asIs"/>
+      <MiningField name="x2_3" invalidValueTreatment="asIs"/>
+      <MiningField name="y2_3" invalidValueTreatment="asIs"/>
+      <MiningField name="z2_3" invalidValueTreatment="asIs"/>
+      <MiningField name="x2_4" invalidValueTreatment="asIs"/>
+      <MiningField name="y2_4" invalidValueTreatment="asIs"/>
+      <MiningField name="z2_4" invalidValueTreatment="asIs"/>
+      <MiningField name="x3_1" invalidValueTreatment="asIs"/>
+      <MiningField name="y3_1" invalidValueTreatment="asIs"/>
+      <MiningField name="z3_1" invalidValueTreatment="asIs"/>
+      <MiningField name="x3_2" invalidValueTreatment="asIs"/>
+      <MiningField name="y3_2" invalidValueTreatment="asIs"/>
+      <MiningField name="z3_2" invalidValueTreatment="asIs"/>
+      <MiningField name="x3_3" invalidValueTreatment="asIs"/>
+      <MiningField name="y3_3" invalidValueTreatment="asIs"/>
+      <MiningField name="z3_3" invalidValueTreatment="asIs"/>
+      <MiningField name="x3_4" invalidValueTreatment="asIs"/>
+      <MiningField name="y3_4" invalidValueTreatment="asIs"/>
+      <MiningField name="z3_4" invalidValueTreatment="asIs"/>
+      <MiningField name="class" invalidValueTreatment="asIs" usageType="target"/>
+    </MiningSchema>
+    <BayesInputs>
+      <BayesInput fieldName="x1_1">
+        <Extension name="numberOfMissingValues" value="0"/>
+        <TargetValueStats>
+          <TargetValueStat value="negative">
+            <Extension name="MissingValCounter" value="0"/>
+            <Extension name="noOfRows" value="1341"/>
+            <GaussianDistribution mean="0.015934100202351538" variance="0.0019426163518397573"/>
+          </TargetValueStat>
+          <TargetValueStat value="positive">
+            <Extension name="MissingValCounter" value="0"/>
+            <Extension name="noOfRows" value="1342"/>
+            <GaussianDistribution mean="0.013829005091748364" variance="0.0035651866018060548"/>
+          </TargetValueStat>
+        </TargetValueStats>
+      </BayesInput>
+      <BayesInput fieldName="y1_1">
+        <Extension name="numberOfMissingValues" value="0"/>
+        <TargetValueStats>
+          <TargetValueStat value="negative">
+            <Extension name="MissingValCounter" value="0"/>
+            <Extension name="noOfRows" value="1341"/>
+            <GaussianDistribution mean="-0.005203593372588148" variance="0.0018284052606349255"/>
+          </TargetValueStat>
+          <TargetValueStat value="positive">
+            <Extension name="MissingValCounter" value="0"/>
+            <Extension name="noOfRows" value="1342"/>
+            <GaussianDistribution mean="0.013170361784796086" variance="0.0035019405974558147"/>
+          </TargetValueStat>
+        </TargetValueStats>
+      </BayesInput>
+      <BayesInput fieldName="z1_1">
+        <Extension name="numberOfMissingValues" value="0"/>
+        <TargetValueStats>
+          <TargetValueStat value="negative">
+            <Extension name="MissingValCounter" value="0"/>
+            <Extension name="noOfRows" value="1341"/>
+            <GaussianDistribution mean="9.958197986458162" variance="28.336433062918434"/>
+          </TargetValueStat>
+          <TargetValueStat value="positive">
+            <Extension name="MissingValCounter" value="0"/>
+            <Extension name="noOfRows" value="1342"/>
+            <GaussianDistribution mean="18.851780306126546" variance="50.78442937909233"/>
+          </TargetValueStat>
+        </TargetValueStats>
+      </BayesInput>
+      <BayesInput fieldName="x1_2">
+        <Extension name="numberOfMissingValues" value="0"/>
+        <TargetValueStats>
+          <TargetValueStat value="negative">
+            <Extension name="MissingValCounter" value="0"/>
+            <Extension name="noOfRows" value="1341"/>
+            <GaussianDistribution mean="0.012402758213589953" variance="0.0022115523065616696"/>
+          </TargetValueStat>
+          <TargetValueStat value="positive">
+            <Extension name="MissingValCounter" value="0"/>
+            <Extension name="noOfRows" value="1342"/>
+            <GaussianDistribution mean="0.045427969380629596" variance="0.0040851029129851885"/>
+          </TargetValueStat>
+        </TargetValueStats>
+      </BayesInput>
+      <BayesInput fieldName="y1_2">
+        <Extension name="numberOfMissingValues" value="0"/>
+        <TargetValueStats>
+          <TargetValueStat value="negative">
+            <Extension name="MissingValCounter" value="0"/>
+            <Extension name="noOfRows" value="1341"/>
+            <GaussianDistribution mean="0.0257848383080882" variance="0.0023178096717259445"/>
+          </TargetValueStat>
+          <TargetValueStat value="positive">
+            <Extension name="MissingValCounter" value="0"/>
+            <Extension name="noOfRows" value="1342"/>
+            <GaussianDistribution mean="-0.018296386740219776" variance="0.0036412116672515046"/>
+          </TargetValueStat>
+        </TargetValueStats>
+      </BayesInput>
+      <BayesInput fieldName="z1_2">
+        <Extension name="numberOfMissingValues" value="0"/>
+        <TargetValueStats>
+          <TargetValueStat value="negative">
+            <Extension name="MissingValCounter" value="0"/>
+            <Extension name="noOfRows" value="1341"/>
+            <GaussianDistribution mean="8.142471602951089" variance="86.9219526295026"/>
+          </TargetValueStat>
+          <TargetValueStat value="positive">
+            <Extension name="MissingValCounter" value="0"/>
+            <Extension name="noOfRows" value="1342"/>
+            <GaussianDistribution mean="15.206508268924981" variance="248.00152347706134"/>
+          </TargetValueStat>
+        </TargetValueStats>
+      </BayesInput>
+      <BayesInput fieldName="x1_3">
+        <Extension name="numberOfMissingValues" value="0"/>
+        <TargetValueStats>
+          <TargetValueStat value="negative">
+            <Extension name="MissingValCounter" value="0"/>
+            <Extension name="noOfRows" value="1341"/>
+            <GaussianDistribution mean="-0.04347040708443007" variance="0.004992010334806679"/>
+          </TargetValueStat>
+          <TargetValueStat value="positive">
+            <Extension name="MissingValCounter" value="0"/>
+            <Extension name="noOfRows" value="1342"/>
+            <GaussianDistribution mean="-0.009699577015492305" variance="0.001059856392086988"/>
+          </TargetValueStat>
+        </TargetValueStats>
+      </BayesInput>
+      <BayesInput fieldName="y1_3">
+        <Extension name="numberOfMissingValues" value="0"/>
+        <TargetValueStats>
+          <TargetValueStat value="negative">
+            <Extension name="MissingValCounter" value="0"/>
+            <Extension name="noOfRows" value="1341"/>
+            <GaussianDistribution mean="0.02044851350713378" variance="0.005193317147001136"/>
+          </TargetValueStat>
+          <TargetValueStat value="positive">
+            <Extension name="MissingValCounter" value="0"/>
+            <Extension name="noOfRows" value="1342"/>
+            <GaussianDistribution mean="-0.02031238085664369" variance="0.001828310445665513"/>
+          </TargetValueStat>
+        </TargetValueStats>
+      </BayesInput>
+      <BayesInput fieldName="z1_3">
+        <Extension name="numberOfMissingValues" value="0"/>
+        <TargetValueStats>
+          <TargetValueStat value="negative">
+            <Extension name="MissingValCounter" value="0"/>
+            <Extension name="noOfRows" value="1341"/>
+            <GaussianDistribution mean="30.265076421526636" variance="65564.01444244759"/>
+          </TargetValueStat>
+          <TargetValueStat value="positive">
+            <Extension name="MissingValCounter" value="0"/>
+            <Extension name="noOfRows" value="1342"/>
+            <GaussianDistribution mean="10.48238764577387" variance="4627.243145350241"/>
+          </TargetValueStat>
+        </TargetValueStats>
+      </BayesInput>
+      <BayesInput fieldName="x1_4">
+        <Extension name="numberOfMissingValues" value="0"/>
+        <TargetValueStats>
+          <TargetValueStat value="negative">
+            <Extension name="MissingValCounter" value="0"/>
+            <Extension name="noOfRows" value="1341"/>
+            <GaussianDistribution mean="-0.009131725376826005" variance="0.0018549961147539902"/>
+          </TargetValueStat>
+          <TargetValueStat value="positive">
+            <Extension name="MissingValCounter" value="0"/>
+            <Extension name="noOfRows" value="1342"/>
+            <GaussianDistribution mean="-0.010228841844748296" variance="8.820778143920054E-4"/>
+          </TargetValueStat>
+        </TargetValueStats>
+      </BayesInput>
+      <BayesInput fieldName="y1_4">
+        <Extension name="numberOfMissingValues" value="0"/>
+        <TargetValueStats>
+          <TargetValueStat value="negative">
+            <Extension name="MissingValCounter" value="0"/>
+            <Extension name="noOfRows" value="1341"/>
+            <GaussianDistribution mean="-0.0029846065794266255" variance="0.0020752059672871155"/>
+          </TargetValueStat>
+          <TargetValueStat value="positive">
+            <Extension name="MissingValCounter" value="0"/>
+            <Extension name="noOfRows" value="1342"/>
+            <GaussianDistribution mean="0.02204044280766542" variance="0.0014036037490526647"/>
+          </TargetValueStat>
+        </TargetValueStats>
+      </BayesInput>
+      <BayesInput fieldName="z1_4">
+        <Extension name="numberOfMissingValues" value="0"/>
+        <TargetValueStats>
+          <TargetValueStat value="negative">
+            <Extension name="MissingValCounter" value="0"/>
+            <Extension name="noOfRows" value="1341"/>
+            <GaussianDistribution mean="67.88750381382762" variance="1391743.0513094272"/>
+          </TargetValueStat>
+          <TargetValueStat value="positive">
+            <Extension name="MissingValCounter" value="0"/>
+            <Extension name="noOfRows" value="1342"/>
+            <GaussianDistribution mean="32.59547377774581" variance="226790.29247695865"/>
+          </TargetValueStat>
+        </TargetValueStats>
+      </BayesInput>
+      <BayesInput fieldName="x2_1">
+        <Extension name="numberOfMissingValues" value="0"/>
+        <TargetValueStats>
+          <TargetValueStat value="negative">
+            <Extension name="MissingValCounter" value="0"/>
+            <Extension name="noOfRows" value="1341"/>
+            <GaussianDistribution mean="0.014930213313261533" variance="0.0020340089557179084"/>
+          </TargetValueStat>
+          <TargetValueStat value="positive">
+            <Extension name="MissingValCounter" value="0"/>
+            <Extension name="noOfRows" value="1342"/>
+            <GaussianDistribution mean="0.04434657256358172" variance="0.005108203430834754"/>
+          </TargetValueStat>
+        </TargetValueStats>
+      </BayesInput>
+      <BayesInput fieldName="y2_1">
+        <Extension name="numberOfMissingValues" value="0"/>
+        <TargetValueStats>
+          <TargetValueStat value="negative">
+            <Extension name="MissingValCounter" value="0"/>
+            <Extension name="noOfRows" value="1341"/>
+            <GaussianDistribution mean="-0.012866753230339366" variance="0.0019080607993162539"/>
+          </TargetValueStat>
+          <TargetValueStat value="positive">
+            <Extension name="MissingValCounter" value="0"/>
+            <Extension name="noOfRows" value="1342"/>
+            <GaussianDistribution mean="0.02026505413810296" variance="0.003047168214291004"/>
+          </TargetValueStat>
+        </TargetValueStats>
+      </BayesInput>
+      <BayesInput fieldName="z2_1">
+        <Extension name="numberOfMissingValues" value="0"/>
+        <TargetValueStats>
+          <TargetValueStat value="negative">
+            <Extension name="MissingValCounter" value="0"/>
+            <Extension name="noOfRows" value="1341"/>
+            <GaussianDistribution mean="7.250096498052158" variance="62.35930094988634"/>
+          </TargetValueStat>
+          <TargetValueStat value="positive">
+            <Extension name="MissingValCounter" value="0"/>
+            <Extension name="noOfRows" value="1342"/>
+            <GaussianDistribution mean="13.413823054761362" variance="171.2445278921169"/>
+          </TargetValueStat>
+        </TargetValueStats>
+      </BayesInput>
+      <BayesInput fieldName="x2_2">
+        <Extension name="numberOfMissingValues" value="0"/>
+        <TargetValueStats>
+          <TargetValueStat value="negative">
+            <Extension name="MissingValCounter" value="0"/>
+            <Extension name="noOfRows" value="1341"/>
+            <GaussianDistribution mean="0.013406645102679984" variance="0.001892742872750787"/>
+          </TargetValueStat>
+          <TargetValueStat value="positive">
+            <Extension name="MissingValCounter" value="0"/>
+            <Extension name="noOfRows" value="1342"/>
+            <GaussianDistribution mean="0.014910401908796098" variance="0.0059127880741875714"/>
+          </TargetValueStat>
+        </TargetValueStats>
+      </BayesInput>
+      <BayesInput fieldName="y2_2">
+        <Extension name="numberOfMissingValues" value="0"/>
+        <TargetValueStats>
+          <TargetValueStat value="negative">
+            <Extension name="MissingValCounter" value="0"/>
+            <Extension name="noOfRows" value="1341"/>
+            <GaussianDistribution mean="0.01812167845033701" variance="0.002181004154462372"/>
+          </TargetValueStat>
+          <TargetValueStat value="positive">
+            <Extension name="MissingValCounter" value="0"/>
+            <Extension name="noOfRows" value="1342"/>
+            <GaussianDistribution mean="-0.011201694386912844" variance="0.004411050504838128"/>
+          </TargetValueStat>
+        </TargetValueStats>
+      </BayesInput>
+      <BayesInput fieldName="z2_2">
+        <Extension name="numberOfMissingValues" value="0"/>
+        <TargetValueStats>
+          <TargetValueStat value="negative">
+            <Extension name="MissingValCounter" value="0"/>
+            <Extension name="noOfRows" value="1341"/>
+            <GaussianDistribution mean="10.443270648706205" variance="2324.759185501121"/>
+          </TargetValueStat>
+          <TargetValueStat value="positive">
+            <Extension name="MissingValCounter" value="0"/>
+            <Extension name="noOfRows" value="1342"/>
+            <GaussianDistribution mean="27.283690849724547" variance="69361.73941755026"/>
+          </TargetValueStat>
+        </TargetValueStats>
+      </BayesInput>
+      <BayesInput fieldName="x2_3">
+        <Extension name="numberOfMissingValues" value="0"/>
+        <TargetValueStats>
+          <TargetValueStat value="negative">
+            <Extension name="MissingValCounter" value="0"/>
+            <Extension name="noOfRows" value="1341"/>
+            <GaussianDistribution mean="-0.0259487365454805" variance="0.0030791694648317643"/>
+          </TargetValueStat>
+          <TargetValueStat value="positive">
+            <Extension name="MissingValCounter" value="0"/>
+            <Extension name="noOfRows" value="1342"/>
+            <GaussianDistribution mean="-0.008247244019141262" variance="9.78672460949526E-4"/>
+          </TargetValueStat>
+        </TargetValueStats>
+      </BayesInput>
+      <BayesInput fieldName="y2_3">
+        <Extension name="numberOfMissingValues" value="0"/>
+        <TargetValueStats>
+          <TargetValueStat value="negative">
+            <Extension name="MissingValCounter" value="0"/>
+            <Extension name="noOfRows" value="1341"/>
+            <GaussianDistribution mean="0.014122635249243629" variance="0.0035422442450370436"/>
+          </TargetValueStat>
+          <TargetValueStat value="positive">
+            <Extension name="MissingValCounter" value="0"/>
+            <Extension name="noOfRows" value="1342"/>
+            <GaussianDistribution mean="-0.020343578256491322" variance="0.0018354106193193434"/>
+          </TargetValueStat>
+        </TargetValueStats>
+      </BayesInput>
+      <BayesInput fieldName="z2_3">
+        <Extension name="numberOfMissingValues" value="0"/>
+        <TargetValueStats>
+          <TargetValueStat value="negative">
+            <Extension name="MissingValCounter" value="0"/>
+            <Extension name="noOfRows" value="1341"/>
+            <GaussianDistribution mean="44.9001441245693" variance="226967.0914575784"/>
+          </TargetValueStat>
+          <TargetValueStat value="positive">
+            <Extension name="MissingValCounter" value="0"/>
+            <Extension name="noOfRows" value="1342"/>
+            <GaussianDistribution mean="18.262460961052074" variance="25775.623664966886"/>
+          </TargetValueStat>
+        </TargetValueStats>
+      </BayesInput>
+      <BayesInput fieldName="x2_4">
+        <Extension name="numberOfMissingValues" value="0"/>
+        <TargetValueStats>
+          <TargetValueStat value="negative">
+            <Extension name="MissingValCounter" value="0"/>
+            <Extension name="noOfRows" value="1341"/>
+            <GaussianDistribution mean="-0.026653395915775674" variance="0.0031793169528007317"/>
+          </TargetValueStat>
+          <TargetValueStat value="positive">
+            <Extension name="MissingValCounter" value="0"/>
+            <Extension name="noOfRows" value="1342"/>
+            <GaussianDistribution mean="-0.011681174841099358" variance="0.001077671472024038"/>
+          </TargetValueStat>
+        </TargetValueStats>
+      </BayesInput>
+      <BayesInput fieldName="y2_4">
+        <Extension name="numberOfMissingValues" value="0"/>
+        <TargetValueStats>
+          <TargetValueStat value="negative">
+            <Extension name="MissingValCounter" value="0"/>
+            <Extension name="noOfRows" value="1341"/>
+            <GaussianDistribution mean="-0.009310484837316758" variance="0.0037199557505043133"/>
+          </TargetValueStat>
+          <TargetValueStat value="positive">
+            <Extension name="MissingValCounter" value="0"/>
+            <Extension name="noOfRows" value="1342"/>
+            <GaussianDistribution mean="0.022009245407817797" variance="0.001745078222299268"/>
+          </TargetValueStat>
+        </TargetValueStats>
+      </BayesInput>
+      <BayesInput fieldName="z2_4">
+        <Extension name="numberOfMissingValues" value="0"/>
+        <TargetValueStats>
+          <TargetValueStat value="negative">
+            <Extension name="MissingValCounter" value="0"/>
+            <Extension name="noOfRows" value="1341"/>
+            <GaussianDistribution mean="18.202758213253965" variance="127.91213421379013"/>
+          </TargetValueStat>
+          <TargetValueStat value="positive">
+            <Extension name="MissingValCounter" value="0"/>
+            <Extension name="noOfRows" value="1342"/>
+            <GaussianDistribution mean="8.295857438500546" variance="23.890457220651037"/>
+          </TargetValueStat>
+        </TargetValueStats>
+      </BayesInput>
+      <BayesInput fieldName="x3_1">
+        <Extension name="numberOfMissingValues" value="0"/>
+        <TargetValueStats>
+          <TargetValueStat value="negative">
+            <Extension name="MissingValCounter" value="0"/>
+            <Extension name="noOfRows" value="1341"/>
+            <GaussianDistribution mean="0.010506417786525465" variance="0.001794095373292665"/>
+          </TargetValueStat>
+          <TargetValueStat value="positive">
+            <Extension name="MissingValCounter" value="0"/>
+            <Extension name="noOfRows" value="1342"/>
+            <GaussianDistribution mean="0.02298329065873898" variance="0.0019434653361326132"/>
+          </TargetValueStat>
+        </TargetValueStats>
+      </BayesInput>
+      <BayesInput fieldName="y3_1">
+        <Extension name="numberOfMissingValues" value="0"/>
+        <TargetValueStats>
+          <TargetValueStat value="negative">
+            <Extension name="MissingValCounter" value="0"/>
+            <Extension name="noOfRows" value="1341"/>
+            <GaussianDistribution mean="-0.01782915687217866" variance="0.0019306507032079308"/>
+          </TargetValueStat>
+          <TargetValueStat value="positive">
+            <Extension name="MissingValCounter" value="0"/>
+            <Extension name="noOfRows" value="1342"/>
+            <GaussianDistribution mean="0.01261410629733587" variance="0.0035815257479239137"/>
+          </TargetValueStat>
+        </TargetValueStats>
+      </BayesInput>
+      <BayesInput fieldName="z3_1">
+        <Extension name="numberOfMissingValues" value="0"/>
+        <TargetValueStats>
+          <TargetValueStat value="negative">
+            <Extension name="MissingValCounter" value="0"/>
+            <Extension name="noOfRows" value="1341"/>
+            <GaussianDistribution mean="9.086429280048602" variance="2300.1655007439936"/>
+          </TargetValueStat>
+          <TargetValueStat value="positive">
+            <Extension name="MissingValCounter" value="0"/>
+            <Extension name="noOfRows" value="1342"/>
+            <GaussianDistribution mean="16.452264657281937" variance="5527.258461633536"/>
+          </TargetValueStat>
+        </TargetValueStats>
+      </BayesInput>
+      <BayesInput fieldName="x3_2">
+        <Extension name="numberOfMissingValues" value="0"/>
+        <TargetValueStats>
+          <TargetValueStat value="negative">
+            <Extension name="MissingValCounter" value="0"/>
+            <Extension name="noOfRows" value="1341"/>
+            <GaussianDistribution mean="0.01783044062941602" variance="0.00214613411735433"/>
+          </TargetValueStat>
+          <TargetValueStat value="positive">
+            <Extension name="MissingValCounter" value="0"/>
+            <Extension name="noOfRows" value="1342"/>
+            <GaussianDistribution mean="0.036273683813638956" variance="0.0024417658113161035"/>
+          </TargetValueStat>
+        </TargetValueStats>
+      </BayesInput>
+      <BayesInput fieldName="y3_2">
+        <Extension name="numberOfMissingValues" value="0"/>
+        <TargetValueStats>
+          <TargetValueStat value="negative">
+            <Extension name="MissingValCounter" value="0"/>
+            <Extension name="noOfRows" value="1341"/>
+            <GaussianDistribution mean="0.013159274808497677" variance="0.001966025211670511"/>
+          </TargetValueStat>
+          <TargetValueStat value="positive">
+            <Extension name="MissingValCounter" value="0"/>
+            <Extension name="noOfRows" value="1342"/>
+            <GaussianDistribution mean="-0.01885264222767997" variance="0.003987871488645803"/>
+          </TargetValueStat>
+        </TargetValueStats>
+      </BayesInput>
+      <BayesInput fieldName="z3_2">
+        <Extension name="numberOfMissingValues" value="0"/>
+        <TargetValueStats>
+          <TargetValueStat value="negative">
+            <Extension name="MissingValCounter" value="0"/>
+            <Extension name="noOfRows" value="1341"/>
+            <GaussianDistribution mean="21.732074166577405" variance="22311.895384479863"/>
+          </TargetValueStat>
+          <TargetValueStat value="positive">
+            <Extension name="MissingValCounter" value="0"/>
+            <Extension name="noOfRows" value="1342"/>
+            <GaussianDistribution mean="101.44033153620464" variance="2836711.1979314103"/>
+          </TargetValueStat>
+        </TargetValueStats>
+      </BayesInput>
+      <BayesInput fieldName="x3_3">
+        <Extension name="numberOfMissingValues" value="0"/>
+        <TargetValueStats>
+          <TargetValueStat value="negative">
+            <Extension name="MissingValCounter" value="0"/>
+            <Extension name="noOfRows" value="1341"/>
+            <GaussianDistribution mean="-0.0252679663214531" variance="0.00377009305419225"/>
+          </TargetValueStat>
+          <TargetValueStat value="positive">
+            <Extension name="MissingValCounter" value="0"/>
+            <Extension name="noOfRows" value="1342"/>
+            <GaussianDistribution mean="-0.010681481604289939" variance="0.0012635269443129003"/>
+          </TargetValueStat>
+        </TargetValueStats>
+      </BayesInput>
+      <BayesInput fieldName="y3_3">
+        <Extension name="numberOfMissingValues" value="0"/>
+        <TargetValueStats>
+          <TargetValueStat value="negative">
+            <Extension name="MissingValCounter" value="0"/>
+            <Extension name="noOfRows" value="1341"/>
+            <GaussianDistribution mean="0.011737146792379654" variance="0.0045270708139704555"/>
+          </TargetValueStat>
+          <TargetValueStat value="positive">
+            <Extension name="MissingValCounter" value="0"/>
+            <Extension name="noOfRows" value="1342"/>
+            <GaussianDistribution mean="-0.02725529570046009" variance="0.001987029633911449"/>
+          </TargetValueStat>
+        </TargetValueStats>
+      </BayesInput>
+      <BayesInput fieldName="z3_3">
+        <Extension name="numberOfMissingValues" value="0"/>
+        <TargetValueStats>
+          <TargetValueStat value="negative">
+            <Extension name="MissingValCounter" value="0"/>
+            <Extension name="noOfRows" value="1341"/>
+            <GaussianDistribution mean="22.323106022659424" variance="73.72831691362171"/>
+          </TargetValueStat>
+          <TargetValueStat value="positive">
+            <Extension name="MissingValCounter" value="0"/>
+            <Extension name="noOfRows" value="1342"/>
+            <GaussianDistribution mean="9.330356651387131" variance="25.807454316912445"/>
+          </TargetValueStat>
+        </TargetValueStats>
+      </BayesInput>
+      <BayesInput fieldName="x3_4">
+        <Extension name="numberOfMissingValues" value="0"/>
+        <TargetValueStats>
+          <TargetValueStat value="negative">
+            <Extension name="MissingValCounter" value="0"/>
+            <Extension name="noOfRows" value="1341"/>
+            <GaussianDistribution mean="-0.027334166139803055" variance="0.002443215464971314"/>
+          </TargetValueStat>
+          <TargetValueStat value="positive">
+            <Extension name="MissingValCounter" value="0"/>
+            <Extension name="noOfRows" value="1342"/>
+            <GaussianDistribution mean="-0.009246937255950669" variance="7.214482187076956E-4"/>
+          </TargetValueStat>
+        </TargetValueStats>
+      </BayesInput>
+      <BayesInput fieldName="y3_4">
+        <Extension name="numberOfMissingValues" value="0"/>
+        <TargetValueStats>
+          <TargetValueStat value="negative">
+            <Extension name="MissingValCounter" value="0"/>
+            <Extension name="noOfRows" value="1341"/>
+            <GaussianDistribution mean="-0.01169597329418074" variance="0.0024154558786150184"/>
+          </TargetValueStat>
+          <TargetValueStat value="positive">
+            <Extension name="MissingValCounter" value="0"/>
+            <Extension name="noOfRows" value="1342"/>
+            <GaussianDistribution mean="0.015097527963849004" variance="0.0010060735016291964"/>
+          </TargetValueStat>
+        </TargetValueStats>
+      </BayesInput>
+      <BayesInput fieldName="z3_4">
+        <Extension name="numberOfMissingValues" value="0"/>
+        <TargetValueStats>
+          <TargetValueStat value="negative">
+            <Extension name="MissingValCounter" value="0"/>
+            <Extension name="noOfRows" value="1341"/>
+            <GaussianDistribution mean="10.124846848860779" variance="133.9503347559771"/>
+          </TargetValueStat>
+          <TargetValueStat value="positive">
+            <Extension name="MissingValCounter" value="0"/>
+            <Extension name="noOfRows" value="1342"/>
+            <GaussianDistribution mean="4.8593171968205215" variance="36.10124334359506"/>
+          </TargetValueStat>
+        </TargetValueStats>
+      </BayesInput>
+    </BayesInputs>
+    <BayesOutput fieldName="class">
+      <Extension name="numberOfMissingValues" value="0"/>
+      <TargetValueCounts>
+        <TargetValueCount value="positive" count="1342.0"/>
+        <TargetValueCount value="negative" count="1341.0"/>
+      </TargetValueCounts>
+    </BayesOutput>
+  </NaiveBayesModel>
+</PMML>

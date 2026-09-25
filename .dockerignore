@@ -11,7 +11,10 @@ utils/*.dll
 .git
 .gitignore
 
+# Manuscript analysis artifacts are kept in GitHub but are not required at runtime
+ML_models/
+Results_data/
+
 # Documentation (optional, uncomment if you want to exclude)
 # README.md
 # LICENSE
-
